@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  /*
+   * This project was designed to use "Lexend" (headings) and
+   * "Atkinson Hyperlegible" (body) from Google Fonts, loaded via
+   * next/font/google. That required reaching fonts.googleapis.com,
+   * which wasn't reachable in the sandbox that generated this code.
+   *
+   * To restore the intended fonts once you have normal internet access:
+   *   1. In src/app/layout.tsx, import { Lexend, Atkinson_Hyperlegible }
+   *      from "next/font/google" and set --font-lexend / --font-atkinson
+   *      via their `variable` option (see Next.js font docs).
+   *   2. Replace the fallback stacks below with var(--font-lexend) and
+   *      var(--font-atkinson).
+   */
+  --font-lexend: "Lexend", ui-sans-serif, system-ui, sans-serif;
+  --font-atkinson: "Atkinson Hyperlegible", ui-sans-serif, system-ui, sans-serif;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-heading: var(--font-lexend);
+  --font-body: var(--font-atkinson);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.font-heading {
+  font-family: var(--font-lexend);
+}
+
+.font-body {
+  font-family: var(--font-atkinson);
+}
