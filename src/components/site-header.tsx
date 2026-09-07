@@ -37,7 +37,7 @@ export function SiteHeader() {
         </div>
         <div className="flex items-center gap-4">
           <Link
-            href="#login"
+            href="/login"
             className="hidden p-2 font-heading text-sm font-medium text-slate-700 transition-colors hover:text-sky-600 sm:inline-block"
           >
             Log In
