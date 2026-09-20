@@ -1,0 +1,131 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  /* Landing page fonts (see :root below + index.html Google Fonts <link>s) */
+  --font-heading: var(--font-lexend);
+  --font-body: var(--font-atkinson);
+}
+
+:root {
+  --primary: #159ac1;
+  --primary-foreground: #f4fdff;
+  --sidebar-primary: #159ac1;
+  --sidebar-primary-foreground: #f4fdff;
+  --chart-1: #b9e9f2;
+  --chart-2: #73cfdf;
+  --chart-3: #159ac1;
+  --chart-4: #0e7795;
+  --chart-5: #214554;
+  --radius: 0.75rem;
+  --background: #f6fbfd;
+  --foreground: #214554;
+  --card: #ffffff;
+  --card-foreground: #214554;
+  --popover: #ffffff;
+  --popover-foreground: #214554;
+  --secondary: #f0f8fa;
+  --secondary-foreground: #5e7d88;
+  --muted: #edf6f8;
+  --muted-foreground: #8aa7b1;
+  --accent: #e8f8fc;
+  --accent-foreground: #159ac1;
+  --destructive: #df7657;
+  --destructive-foreground: #fffaf8;
+  --border: #e2eef1;
+  --input: #e2eef1;
+  --ring: #85d4e3;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #214554;
+  --sidebar-accent: #e8f8fc;
+  --sidebar-accent-foreground: #159ac1;
+  --sidebar-border: #e2eef1;
+  --sidebar-ring: #85d4e3;
+
+  /* Landing page (marketing site) typography, ported from the original
+     Next.js project's globals.css. Loaded via Google Fonts <link> tags in
+     index.html; these are the fallback stacks if that CDN is unreachable. */
+  --font-lexend: "Lexend", ui-sans-serif, system-ui, sans-serif;
+  --font-atkinson: "Atkinson Hyperlegible", ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-heading { font-family: var(--font-lexend); }
+.font-body { font-family: var(--font-atkinson); }
+
+/* Landing login/signup card shadow (src/app/login/page.tsx used this class
+   name but the original project never defined it — restored here). */
+.shadow-calm { box-shadow: 0 20px 45px -12px rgba(21, 60, 90, 0.16); }
+
+/* Dyslexia-friendly reading mode, toggled from the login/signup page. Also
+   never defined in the original project; OpenDyslexic isn't reliably
+   available without bundling font files, so this uses a widely-recommended
+   substitute (increased size/spacing + a rounder, more open sans-serif) that
+   the WebAIM and British Dyslexia Association guidance both call out as
+   more legible for dyslexic readers than the default body font. */
+.dyslexia-mode, .dyslexia-mode * {
+  font-family: "Comic Sans MS", "Comic Sans", Verdana, Tahoma, sans-serif !important;
+  letter-spacing: 0.02em !important;
+  line-height: 1.7 !important;
+  word-spacing: 0.05em !important;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; min-width: 320px; background: var(--background); font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif; }
+button, input, select { font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground; }
+  button:not(:disabled), [role="button"]:not([aria-disabled="true"]), [type="button"]:not(:disabled), [type="submit"]:not(:disabled), [type="reset"]:not(:disabled), a[href], select:not(:disabled), input[type="checkbox"]:not(:disabled), input[type="radio"]:not(:disabled) { @apply cursor-pointer; }
+}
+
+@layer components {
+  .container { width: 100%; margin-inline: auto; padding-inline: 1rem; }
+  .flex { min-height: 0; min-width: 0; }
+  @media (min-width: 640px) { .container { padding-inline: 1.5rem; } }
+  @media (min-width: 1024px) { .container { max-width: 1280px; padding-inline: 2rem; } }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  button, a, input, select { transition: color 160ms ease-out, background-color 160ms ease-out, border-color 160ms ease-out, box-shadow 160ms ease-out, transform 160ms ease-out, opacity 160ms ease-out; }
+}
