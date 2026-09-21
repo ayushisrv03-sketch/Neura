@@ -91,12 +91,8 @@ export function AdaptiveCycleSection() {
           </p>
         </div>
 
-        <div className="relative w-full">
-          <div
-            aria-hidden
-            className="absolute left-8 right-8 top-[70px] hidden h-0.5 bg-gradient-to-r from-sky-200 via-sky-400 to-sky-700 lg:block"
-          />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="w-full">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
             {steps.map((step) => {
               const Icon = step.icon;
               const isDark = step.tone === "dark";

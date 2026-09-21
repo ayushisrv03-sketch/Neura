@@ -3,7 +3,7 @@ import { ArrowRight, BookOpen } from "lucide-react";
 
 export function CtaBanner() {
   return (
-    <section id="accessibility" className="px-4 pb-16 sm:px-16 lg:px-32">
+    <section id="accessibility" className="px-4 py-16 sm:px-16 sm:py-20 lg:px-32 lg:py-24">
       <div className="relative mx-auto max-w-4xl overflow-hidden rounded-2xl bg-gradient-to-br from-sky-600 via-sky-500 to-sky-400 px-6 py-16 text-center shadow-2xl sm:px-12">
         <div
           aria-hidden
