@@ -74,11 +74,7 @@ export function TopicSidebar({ topicName }: TopicSidebarProps) {
   const selectLesson = (index: number) => {
     if (!isLessonUnlocked(index, completedIndices)) return;
     setCurrentLessonIdx(index);
-    const search = new URLSearchParams(window.location.search);
-    search.set("lesson", (index + 1).toString());
-    const newUrl = `${window.location.pathname}?${search.toString()}`;
-    window.history.pushState({}, "", newUrl);
-    // Dispatch popstate so TopicLesson updates active lesson view instantly
+    setLocation(`/dashboard/lessons/${encodeURIComponent(topicName)}?lesson=${index + 1}`);
     window.dispatchEvent(new Event("popstate"));
     setOpenMobile(false);
   };
