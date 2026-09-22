@@ -87,40 +87,89 @@ export default function TopicLesson() {
     setCurrentQIdx(0);
   }, [topic, activeLessonIdx]);
 
-  const activeLesson = curriculum.lessons[activeLessonIdx] || curriculum.lessons[0];
+  const activeLesson = curriculum?.lessons?.[activeLessonIdx] || curriculum?.lessons?.[0];
   const isLessonCompleted = completedIndices.includes(activeLessonIdx);
 
   const course = useMemo(() => data?.courses.find((item) => item.title === topic), [data, topic]);
 
-  if (!topic || !curriculum) {
-    const furtherLessons = useMemo(() => {
-      return (Object.entries(lessons) as [Topic, typeof lessons[Topic]][])
-        .filter(([title, l]) => title !== topic && isSubjectSelected(l.subject))
-        .map(([title, l]) => ({ title, ...l }));
-    }, [topic, isSubjectSelected]);
+  const furtherLessons = useMemo(() => {
+    return Object.entries(lessons)
+      .filter(([title, l]) => title !== topic && isSubjectSelected(l.subject))
+      .map(([title, l]) => ({ title, ...l }));
+  }, [topic, isSubjectSelected]);
 
-    const nextTopic = furtherLessons[0];
+  const nextTopic = furtherLessons[0];
 
-    if (!lesson)
-      return (
-        <DashboardLayout allowGuest>
-          <div className="min-h-screen bg-[#f6fbfd] p-8 text-[#214554]">
-            <button
-              onClick={() => setLocation("/dashboard")}
-              className="flex items-center gap-2 text-sm font-bold text-[#159ac1]"
-            >
-              <ArrowLeft className="h-4 w-4" /> Back to dashboard
-            </button>
-            <h1 className="mt-8 text-2xl font-bold">Lesson not found</h1>
-          </div>
-        </DashboardLayout>
-      );
+  if (!topic || !curriculum || !activeLesson) {
+    return (
+      <DashboardLayout allowGuest>
+        <div className="min-h-screen bg-[#f6fbfd] p-8 text-[#214554]">
+          <button
+            onClick={() => setLocation("/dashboard")}
+            className="flex items-center gap-2 text-sm font-bold text-[#159ac1]"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to dashboard
+          </button>
+          <h1 className="mt-8 text-2xl font-bold">Lesson not found</h1>
+        </div>
+      </DashboardLayout>
+    );
   }
 
+  const lesson = activeLesson;
   const totalLessonsCount = curriculum.lessons.length;
   const completedLessonsCount = completedIndices.length;
-  const calculatedProgress = Math.round((completedLessonsCount / totalLessonsCount) * 100);
+  const calculatedProgress =
+    totalLessonsCount > 0
+      ? Math.round((completedLessonsCount / totalLessonsCount) * 100)
+      : 0;
 
+<<<<<<< Updated upstream
+=======
+  if (!isSubjectSelected(curriculum.subject))
+    return (
+      <DashboardLayout allowGuest>
+        <div className="min-h-screen bg-[#f6fbfd] p-8 text-[#214554]">
+          <button
+            onClick={() => setLocation("/dashboard")}
+            className="flex items-center gap-2 text-sm font-bold text-[#159ac1] transition hover:text-[#0e7795]"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to dashboard
+          </button>
+          <div className="mt-8 max-w-lg rounded-2xl border border-[#dff0f4] bg-white p-8 shadow-[0_10px_35px_rgba(27,91,109,0.04)]">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3.5 py-1.5 text-xs font-bold text-amber-800 border border-amber-200">
+              <GraduationCap className="h-4 w-4" /> Subject not in active curriculum
+            </div>
+            <h1 className="text-2xl font-bold text-[#173c4b]">{topic}</h1>
+            <p className="mt-2 text-sm leading-relaxed text-[#7897a2]">
+              This topic belongs to <strong>{curriculum.subject}</strong>. Your current curriculum is set to{" "}
+              <strong>{subjectSummary}</strong>.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                onClick={() => setLocation("/dashboard")}
+                className="rounded-xl bg-[#159ac1] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1088aa]"
+              >
+                Return to {subjectSummary}
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedSubjects([...selectedSubjects, curriculum.subject]);
+                }}
+                className="rounded-xl border border-[#dfeef1] bg-white px-5 py-2.5 text-sm font-bold text-[#6e8c97] transition hover:bg-[#f0fafc] hover:text-[#159ac1]"
+              >
+                Enable {curriculum.subject} &amp; continue
+              </button>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+
+  const progress = course?.progress ?? 0;
+  const lessonsCompleted = course?.lessonsCompleted ?? 0;
+  const lessonsTotal = course?.lessonsTotal ?? 1;
+>>>>>>> Stashed changes
   const completeLesson = () => {
     if (isLessonCompleted) return;
     const updated = setTopicLessonCompleted(topic, activeLessonIdx);
@@ -422,6 +471,17 @@ export default function TopicLesson() {
                   ? `Lesson ${activeLessonIdx + 1} completed (+15 min logged)`
                   : `Mark Lesson ${activeLessonIdx + 1} complete`}
               </button>
+<<<<<<< Updated upstream
+=======
+              {isLessonCompleted && nextTopic && (
+                <button
+                  onClick={() => setLocation(`/dashboard/lessons/${encodeURIComponent(nextTopic.title)}`)}
+                  className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#159ac1] bg-[#e8f8fc] text-sm font-bold text-[#159ac1] transition hover:bg-[#d4f2f8]"
+                >
+                  Continue to next lesson: {nextTopic.title} <ArrowRight className="h-4 w-4" />
+                </button>
+              )}
+>>>>>>> Stashed changes
             </article>
 
             <aside className="space-y-5">
