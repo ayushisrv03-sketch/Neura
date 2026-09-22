@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { ArrowRight, PlayCircle, Sparkles, Check } from "lucide-react";
+import type { CSSProperties } from "react";
 
 const trustPoints = [
   "Untimed & Self-Paced",
@@ -7,32 +8,61 @@ const trustPoints = [
   "Multimodal by Default",
 ];
 
-const floatingCards = [
-  {
-    eyebrow: "ADAPTIVE HELP",
-    value: "4 levels",
-    accent: "bg-sky-200",
-    className: "left-1/2 -translate-x-[380px] rotate-[-12deg] top-6",
-  },
-  {
-    eyebrow: "INSIGHTS",
-    value: "24/7",
-    caption: "zero pressure",
-    className: "left-1/2 translate-x-[172px] rotate-[12deg] top-0",
-  },
-  {
-    eyebrow: "SMART SIGNALS",
-    value: "92%",
-    caption: "comfort index",
-    className: "left-1/2 -translate-x-[196px] rotate-[-6deg] top-4",
-  },
-  {
-    eyebrow: "NEURA ENGINE",
-    value: "Learn\nyour way",
-    accent: "bg-sky-300",
-    className: "left-1/2 translate-x-[8px] rotate-[6deg] top-2",
-  },
-];
+const floatingCards: Array<{
+  eyebrow: string;
+  value: string;
+  caption?: string;
+  accent?: boolean;
+  align?: "left" | "right";
+  style: CSSProperties;
+}> = [
+    {
+      eyebrow: "ADAPTIVE HELP",
+      value: "4 levels",
+      accent: true,
+      style: {
+        left: "calc(50% - 308px)",
+        top: "40px",
+        transform: "translateX(-50%) rotate(-12deg)",
+        zIndex: 10,
+      },
+    },
+    {
+      eyebrow: "SMART SIGNALS",
+      value: "92%",
+      caption: "comfort index",
+      style: {
+        left: "calc(50% - 156px)",
+        top: "14px",
+        transform: "translateX(-50%) rotate(-5deg)",
+        zIndex: 20,
+      },
+    },
+    {
+      eyebrow: "NEURA ENGINE",
+      value: "Learn\nyour way",
+      accent: true,
+      align: "right",
+      style: {
+        left: "calc(50% + 156px)",
+        top: "14px",
+        transform: "translateX(-50%) rotate(5deg)",
+        zIndex: 20,
+      },
+    },
+    {
+      eyebrow: "INSIGHTS",
+      value: "24/7",
+      caption: "zero pressure",
+      align: "right",
+      style: {
+        left: "calc(50% + 308px)",
+        top: "40px",
+        transform: "translateX(-50%) rotate(12deg)",
+        zIndex: 10,
+      },
+    },
+  ];
 
 export function HeroSection() {
   return (
@@ -90,49 +120,88 @@ export function HeroSection() {
         </div>
 
         {/* Floating stat cards */}
-        <div className="relative hidden h-56 w-full max-w-3xl md:block">
-          {floatingCards.map((card) => (
-            <div
-              key={card.eyebrow}
-              className={`absolute w-44 rounded-2xl border border-sky-100 bg-white p-4 shadow-2xl ${card.className}`}
-            >
-              <p className="font-heading text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                {card.eyebrow}
-              </p>
-              <p className="mt-4 whitespace-pre-line font-heading text-2xl font-bold leading-tight text-slate-900">
-                {card.value}
-              </p>
-              {card.caption && (
-                <p className="mt-1 font-body text-xs text-slate-500">
-                  {card.caption}
+        <div className="relative hidden h-56 w-full max-w-4xl select-none md:block scale-[0.9] lg:scale-100 origin-top">
+          {floatingCards.map((card) => {
+            const isRight = card.align === "right";
+            return (
+              <div
+                key={card.eyebrow}
+                style={card.style}
+                className="absolute flex h-[175px] w-[208px] flex-col justify-between rounded-[24px] border border-sky-100/70 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.08),0_4px_12px_rgba(15,23,42,0.04)]"
+              >
+                <p
+                  className={`w-full font-heading text-[10.5px] font-bold uppercase tracking-[0.14em] text-slate-400 ${isRight ? "text-right" : "text-left"
+                    }`}
+                >
+                  {card.eyebrow}
                 </p>
-              )}
-              {card.accent && (
+
+                <div className={`my-auto w-full ${isRight ? "text-right" : "text-left"}`}>
+                  {card.eyebrow === "SMART SIGNALS" || card.eyebrow === "INSIGHTS" ? (
+                    <p className="font-heading text-[38px] font-extrabold tracking-tight text-slate-900">
+                      {card.value}
+                    </p>
+                  ) : card.eyebrow === "NEURA ENGINE" ? (
+                    <p className="inline-block text-left font-heading text-[24px] font-bold leading-tight tracking-tight text-slate-900">
+                      <span className="block">Learn</span>
+                      <span className="block">your way</span>
+                    </p>
+                  ) : (
+                    <p className="font-heading text-[26px] font-bold tracking-tight text-slate-900">
+                      {card.value}
+                    </p>
+                  )}
+                </div>
+
                 <div
-                  className={`mt-4 h-1.5 w-12 rounded-full ${card.accent}`}
-                />
-              )}
-            </div>
-          ))}
+                  className={`flex h-5 w-full items-center ${isRight ? "justify-end text-right" : "justify-start text-left"
+                    }`}
+                >
+                  {card.caption ? (
+                    <p className="font-body text-xs font-normal text-slate-400">
+                      {card.caption}
+                    </p>
+                  ) : card.accent ? (
+                    <div
+                      className={`h-1.5 w-12 rounded-full bg-sky-300/90 ${isRight ? "-translate-x-14" : ""
+                        }`}
+                    />
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+
           {/* Center dark spotlight card */}
-          <div className="absolute left-1/2 top-2 w-56 -translate-x-1/2 rounded-2xl border border-slate-700/60 bg-slate-950 p-5 shadow-2xl">
-            <div className="flex items-center gap-1.5">
-              <span className="flex size-5 items-center justify-center rounded-full bg-sky-400 text-[11px] text-slate-900">
-                ✦
-              </span>
-              <span className="font-heading text-[11px] font-bold uppercase tracking-widest text-slate-300">
-                Neura
+          <div
+            style={{
+              left: "50%",
+              top: "0px",
+              transform: "translateX(-50%)",
+              zIndex: 30,
+            }}
+            className="absolute flex h-[205px] w-[234px] flex-col justify-between rounded-[26px] border border-slate-800/80 bg-[#040812] p-5 shadow-[0_22px_45px_rgba(0,0,0,0.5),0_8px_18px_rgba(0,0,0,0.3)]"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-6 w-4 items-center justify-center rounded-full bg-sky-400 shadow-sm">
+                <div className="h-3 w-1 rounded-full bg-[#040812]" />
+              </div>
+
+              <span className="font-heading text-[11px] font-bold tracking-[0.2em] text-white">
+                NEURA
               </span>
             </div>
-            <p className="mt-4 font-heading text-xl font-bold leading-snug text-white">
+
+            <p className="my-auto font-heading text-[27px] font-bold leading-[1.14] tracking-tight text-white">
               Visual
               <br />
               explanation
             </p>
-            <p className="mt-4 flex items-center gap-1 font-body text-xs text-sky-300">
-              <Sparkles className="size-3.5" aria-hidden />
-              Active mode
-            </p>
+
+            <div className="flex items-center gap-2 font-body text-xs font-medium text-sky-300">
+              <Sparkles className="size-3.5 text-sky-400" aria-hidden />
+              <span>Active mode</span>
+            </div>
           </div>
         </div>
       </div>

@@ -173,6 +173,11 @@ export async function createLocalUser(user: { openId: string; name: string; emai
   return newUser;
 }
 
+export async function updateUserName(openId: string, name: string): Promise<User | undefined> {
+  await upsertUser({ openId, name });
+  return getUserByOpenId(openId);
+}
+
 export const WEEKLY_GOAL_MINUTES = 260;
 const LESSON_XP = 50;
 const MINUTE_XP = 4;

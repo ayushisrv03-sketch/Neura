@@ -59,6 +59,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  console.log("[Server] Initializing Express app...");
   const app = express();
   const server = createServer(app);
   // Configure body parser with larger size limit for file uploads
@@ -80,7 +81,9 @@ async function startServer() {
   app.use(guardProtectedPages);
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
+    console.log("[Server] Configuring Vite middleware...");
     await setupVite(app, server);
+    console.log("[Server] Vite middleware configured.");
   } else {
     serveStatic(app);
   }

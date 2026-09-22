@@ -28,7 +28,7 @@ function isValidEmail(value: unknown): value is string {
   return typeof value === "string" && EMAIL_RE.test(value);
 }
 
-async function issueSession(req: Request, res: Response, user: { openId: string; name: string | null }) {
+export async function issueSession(req: Request, res: Response, user: { openId: string; name: string | null }) {
   const sessionToken = await sdk.createSessionToken(user.openId, {
     name: user.name || "",
     expiresInMs: ONE_YEAR_MS,
@@ -71,7 +71,7 @@ export function registerLocalAuthRoutes(app: Express) {
       }
 
       await issueSession(req, res, user);
-      res.status(201).json({ success: true });
+      res.status(201).json({ success: true, user: { id: user.id, name: user.name, email: user.email } });
     } catch (error) {
       console.error("[Auth] Signup failed", error);
       res.status(500).json({ error: "Something went wrong creating your account." });
@@ -95,7 +95,7 @@ export function registerLocalAuthRoutes(app: Express) {
       }
 
       await issueSession(req, res, user);
-      res.status(200).json({ success: true });
+      res.status(200).json({ success: true, user: { id: user.id, name: user.name, email: user.email } });
     } catch (error) {
       console.error("[Auth] Login failed", error);
       res.status(500).json({ error: "Something went wrong signing you in." });
