@@ -5,6 +5,12 @@ import LinearEquationVisual from "@/components/visuals/LinearEquationVisual";
 import PhotosynthesisVisual from "@/components/visuals/PhotosynthesisVisual";
 import PlantPartsVisual from "@/components/visuals/PlantPartsVisual";
 import StatesOfMatterVisual from "@/components/visuals/StatesOfMatterVisual";
+import {
+  getTopicCompletedLessons,
+  getTopicCurriculum,
+  lessons,
+  setTopicLessonCompleted,
+} from "@/lib/topicCurriculum";
 import { trpc } from "@/lib/trpc";
 import {
   ArrowLeft,
@@ -19,93 +25,12 @@ import {
   RotateCcw,
   Sparkles,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useRoute } from "wouter";
 
-const lessons = {
-  Fractions: {
-    subject: "Maths",
-    level: "Grade 7",
-    eyebrow: "Parts of a whole",
-    intro: "Fractions describe equal parts of a whole and help us compare quantities clearly.",
-    explanation:
-      "A fraction has a numerator, which tells us how many parts we have, and a denominator, which tells us how many equal parts make the whole.",
-    example: "3/4 = 6/8",
-    activity: "Shade 3 of 4 equal parts, then find an equivalent fraction by multiplying both numbers by 2.",
-    question: "Which fraction is equivalent to 1/2?",
-    choices: ["2/4", "1/3", "3/5"],
-    answer: "2/4",
-  },
-  "Linear equations": {
-    subject: "Maths",
-    level: "Grade 7",
-    eyebrow: "Balance methods",
-    intro: "Solve for an unknown by keeping both sides of the equation balanced.",
-    explanation:
-      "Whatever operation you apply to one side of an equation, apply the same operation to the other side so the equality stays true.",
-    example: "2x + 3 = 11 → x = 4",
-    activity: "Subtract 3 from both sides, then divide both sides by 2.",
-    question: "What is x in 2x + 3 = 11?",
-    choices: ["3", "4", "7"],
-    answer: "4",
-  },
-  Geometry: {
-    subject: "Maths",
-    level: "Grade 7",
-    eyebrow: "Angles and triangles",
-    intro: "Geometry helps us describe shapes, space, and the relationships between lines and angles.",
-    explanation:
-      "The angles inside every triangle add up to 180°. Use known angles to work out the missing one.",
-    example: "60° + 50° + 70° = 180°",
-    activity: "Draw a triangle and label two angles. Calculate the third angle using the triangle rule.",
-    question: "What is the angle sum of a triangle?",
-    choices: ["90°", "180°", "360°"],
-    answer: "180°",
-  },
-  Photosynthesis: {
-    subject: "Science",
-    level: "Grade 6",
-    eyebrow: "Light-dependent reactions",
-    intro: "Plants use light energy to make the food they need.",
-    explanation:
-      "In photosynthesis, leaves use sunlight, water, and carbon dioxide to produce glucose and oxygen inside chloroplasts.",
-    example: "Sunlight + water + carbon dioxide → glucose + oxygen",
-    activity: "Trace the path from sunlight to glucose in a leaf, then explain why oxygen is released.",
-    question: "Which gas do plants take in during photosynthesis?",
-    choices: ["Oxygen", "Carbon dioxide", "Nitrogen"],
-    answer: "Carbon dioxide",
-  },
-  "States of matter": {
-    subject: "Science",
-    level: "Grade 6",
-    eyebrow: "Particles in motion",
-    intro: "Matter can be solid, liquid, or gas depending on how its particles are arranged and moving.",
-    explanation:
-      "Heating gives particles more energy. They move further apart and can change from solid to liquid to gas.",
-    example: "ice → water → steam",
-    activity: "Compare the particle spacing in ice, water, and steam and describe what heating changes.",
-    question: "Which state has particles moving most freely?",
-    choices: ["Solid", "Liquid", "Gas"],
-    answer: "Gas",
-  },
-  "Parts of a plant": {
-    subject: "Science",
-    level: "Grade 5",
-    eyebrow: "Roots, stems, and leaves",
-    intro: "Each plant part has a role that helps the plant grow and survive.",
-    explanation:
-      "Roots absorb water, stems support and transport materials, and leaves use light to make food.",
-    example: "Roots → water | Stem → transport | Leaves → food",
-    activity: "Match each plant part to its job, then explain how the parts work together.",
-    question: "Which plant part absorbs water from the soil?",
-    choices: ["Roots", "Leaves", "Flowers"],
-    answer: "Roots",
-  },
-} as const;
+type SupportedTopic = "Fractions" | "Linear equations" | "Geometry" | "Photosynthesis" | "States of matter" | "Parts of a plant";
 
-type Topic = keyof typeof lessons;
-
-function renderVisualComponent(topic: Topic) {
+function renderVisualComponent(topic: string) {
   switch (topic) {
     case "Fractions":
       return <FractionVisual />;
@@ -127,19 +52,69 @@ function renderVisualComponent(topic: Topic) {
 export default function TopicLesson() {
   const [, params] = useRoute("/dashboard/lessons/:topic");
   const [, setLocation] = useLocation();
-  const topic = decodeURIComponent(params?.topic ?? "") as Topic;
-  const lesson = lessons[topic];
+  const topic = decodeURIComponent(params?.topic ?? "");
+  const curriculum = useMemo(() => getTopicCurriculum(topic), [topic]);
+
   const { data } = trpc.dashboard.overview.useQuery();
   const utils = trpc.useUtils();
   const logStudy = trpc.dashboard.logStudy.useMutation();
+
+  const [completedIndices, setCompletedIndices] = useState<number[]>(() =>
+    getTopicCompletedLessons(topic)
+  );
+
+  const [activeLessonIdx, setActiveLessonIdx] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const search = new URLSearchParams(window.location.search);
+      const param = search.get("lesson");
+      if (param) {
+        const parsed = parseInt(param, 10) - 1;
+        if (parsed >= 0 && parsed < curriculum.lessons.length) return parsed;
+      }
+    }
+    return 0;
+  });
+
   const [answer, setAnswer] = useState<string | null>(null);
-  const [completed, setCompleted] = useState(false);
   const [activeMode, setActiveMode] = useState<"steps" | "visual" | "example" | "simple" | "hint" | "stuck" | "visual">(
     "visual"
   );
 
+  useEffect(() => {
+    const handleSync = () => {
+      const search = new URLSearchParams(window.location.search);
+      const param = search.get("lesson");
+      if (param) {
+        const parsed = parseInt(param, 10) - 1;
+        if (parsed >= 0 && parsed < curriculum.lessons.length) {
+          setActiveLessonIdx(parsed);
+        }
+      } else {
+        setActiveLessonIdx(0);
+      }
+      setCompletedIndices(getTopicCompletedLessons(topic));
+      setAnswer(null);
+    };
+
+    window.addEventListener("popstate", handleSync);
+    window.addEventListener("neura-lesson-completed", handleSync);
+
+    return () => {
+      window.removeEventListener("popstate", handleSync);
+      window.removeEventListener("neura-lesson-completed", handleSync);
+    };
+  }, [topic, curriculum.lessons.length]);
+
+  useEffect(() => {
+    setCompletedIndices(getTopicCompletedLessons(topic));
+  }, [topic]);
+
+  const activeLesson = curriculum.lessons[activeLessonIdx] || curriculum.lessons[0];
+  const isLessonCompleted = completedIndices.includes(activeLessonIdx);
+
   const course = useMemo(() => data?.courses.find((item) => item.title === topic), [data, topic]);
-  if (!lesson)
+
+  if (!topic || !curriculum) {
     return (
       <DashboardLayout allowGuest>
         <div className="min-h-screen bg-[#f6fbfd] p-8 text-[#214554]">
@@ -153,13 +128,16 @@ export default function TopicLesson() {
         </div>
       </DashboardLayout>
     );
+  }
 
-  const progress = course?.progress ?? 0;
-  const lessonsCompleted = course?.lessonsCompleted ?? 0;
-  const lessonsTotal = course?.lessonsTotal ?? 1;
+  const totalLessonsCount = curriculum.lessons.length;
+  const completedLessonsCount = completedIndices.length;
+  const calculatedProgress = Math.round((completedLessonsCount / totalLessonsCount) * 100);
+
   const completeLesson = () => {
-    if (completed) return;
-    setCompleted(true);
+    if (isLessonCompleted) return;
+    const updated = setTopicLessonCompleted(topic, activeLessonIdx);
+    setCompletedIndices(updated);
     if (course) {
       logStudy.mutate(
         { courseId: course.id, minutes: 15 },
@@ -171,9 +149,9 @@ export default function TopicLesson() {
   const modeContent =
     activeMode === "steps" ? (
       <ol className="list-decimal space-y-2 pl-5 text-sm text-[#5e7d87]">
-        <li>Start with the key idea: {lesson.intro}</li>
+        <li>Start with the key idea: {activeLesson.intro}</li>
         <li>Focus on the important relationship in {topic}.</li>
-        <li>Use the worked example: {lesson.example}.</li>
+        <li>Use the worked example: {activeLesson.example}.</li>
         <li>Try the quick check and explain your reasoning.</li>
       </ol>
     ) : activeMode === "visual" ? (
@@ -187,12 +165,12 @@ export default function TopicLesson() {
       <div>
         <p className="text-sm text-[#5e7d87]">Here is a worked example for {topic}:</p>
         <p className="mt-3 rounded-xl bg-white p-4 text-lg font-bold text-[#1d596b] border border-[#e1f0f4]">
-          {lesson.example}
+          {activeLesson.example}
         </p>
-        <p className="mt-3 text-sm text-[#5e7d87]">{lesson.activity}</p>
+        <p className="mt-3 text-sm text-[#5e7d87]">{activeLesson.activity}</p>
       </div>
     ) : activeMode === "simple" ? (
-      <p className="text-sm text-[#5e7d87]">{lesson.explanation.split(".")[0]}.</p>
+      <p className="text-sm text-[#5e7d87]">{activeLesson.explanation.split(".")[0]}.</p>
     ) : activeMode === "hint" ? (
       <p className="text-sm text-[#5e7d87]">
         <strong>Hint:</strong> Look at the key relationship in the worked example, then apply the same idea to the
@@ -222,38 +200,46 @@ export default function TopicLesson() {
           <div className="mt-7 flex flex-col justify-between gap-5 md:flex-row md:items-end">
             <div>
               <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#e8f8fc] px-3 py-1.5 text-xs font-bold text-[#159ac1]">
-                <GraduationCap className="h-3.5 w-3.5" /> {lesson.subject} · {lesson.level}
+                <GraduationCap className="h-3.5 w-3.5" /> {curriculum.subject} · {curriculum.level}
               </div>
               <h1 className="text-3xl font-bold tracking-tight text-[#173c4b] sm:text-4xl">{topic}</h1>
-              <p className="mt-2 text-base text-[#7897a2]">{lesson.eyebrow}</p>
+              <p className="mt-2 text-base text-[#7897a2]">{curriculum.eyebrow}</p>
             </div>
             <div className="rounded-2xl border border-[#dff0f4] bg-white px-5 py-4">
               <div className="flex items-center justify-between gap-8">
                 <span className="text-xs font-bold text-[#8aa7b1]">Topic progress</span>
                 <span className="text-lg font-bold text-[#159ac1]">
-                  {completed ? Math.min(100, progress + 12) : progress}%
+                  {calculatedProgress}%
                 </span>
               </div>
               <div className="mt-2 h-2.5 w-48 overflow-hidden rounded-full bg-[#edf5f7]">
                 <div
-                  className="h-full rounded-full bg-[#159ac1] transition-all"
-                  style={{ width: `${completed ? Math.min(100, progress + 12) : progress}%` }}
+                  className="h-full rounded-full bg-[#159ac1] transition-all duration-300"
+                  style={{ width: `${calculatedProgress}%` }}
                 />
               </div>
-              <p className="mt-2 text-[11px] text-[#9bb2ba]">
-                {completed ? Math.min(lessonsTotal, lessonsCompleted + 1) : lessonsCompleted}/{lessonsTotal} lessons
-                complete
+              <p className="mt-2 text-[11px] font-semibold text-[#9bb2ba]">
+                {completedLessonsCount}/{totalLessonsCount} lessons complete
               </p>
             </div>
           </div>
 
           <section className="mt-7 grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
             <article className="rounded-2xl border border-[#dff0f4] bg-white p-6 shadow-[0_10px_35px_rgba(27,91,109,0.04)] sm:p-8">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#8aa7b1]">
-                <Clock3 className="h-4 w-4" /> 15 minute lesson
+              <div className="flex items-center justify-between border-b border-[#f0f7f9] pb-4">
+                <div className="flex items-center gap-2 text-xs font-bold text-[#8aa7b1]">
+                  <Clock3 className="h-4 w-4" /> 15 minute lesson
+                </div>
+                <span className="rounded-full bg-[#e8f8fc] px-3 py-1 text-xs font-bold text-[#159ac1]">
+                  Lesson {activeLessonIdx + 1} of {totalLessonsCount}
+                </span>
               </div>
-              <h2 className="mt-5 text-2xl font-bold tracking-tight text-[#214554]">{lesson.intro}</h2>
-              <p className="mt-4 text-sm leading-7 text-[#66828c]">{lesson.explanation}</p>
+
+              <h2 className="mt-5 text-2xl font-bold tracking-tight text-[#214554]">
+                {activeLesson.title}
+              </h2>
+              <p className="mt-3 text-base font-semibold text-[#315866]">{activeLesson.intro}</p>
+              <p className="mt-3 text-sm leading-7 text-[#66828c]">{activeLesson.explanation}</p>
 
               {/* Featured Interactive Visual Sandbox */}
               <div className="mt-7">
@@ -364,21 +350,21 @@ export default function TopicLesson() {
                 <div className="flex items-center gap-2 text-sm font-bold text-[#159ac1]">
                   <Leaf className="h-4 w-4" /> Worked example
                 </div>
-                <p className="mt-3 text-lg font-bold text-[#1d596b]">{lesson.example}</p>
-                <p className="mt-2 text-sm leading-6 text-[#5e8a97]">{lesson.activity}</p>
+                <p className="mt-3 text-lg font-bold text-[#1d596b]">{activeLesson.example}</p>
+                <p className="mt-2 text-sm leading-6 text-[#5e8a97]">{activeLesson.activity}</p>
               </div>
 
               <div className="mt-6 rounded-2xl border border-[#e5f0f3] p-5">
                 <p className="text-sm font-bold text-[#315866]">Quick understanding check</p>
-                <p className="mt-3 text-sm text-[#66828c]">{lesson.question}</p>
+                <p className="mt-3 text-sm text-[#66828c]">{activeLesson.question}</p>
                 <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                  {lesson.choices.map((choice) => (
+                  {activeLesson.choices.map((choice) => (
                     <button
                       key={choice}
                       onClick={() => setAnswer(choice)}
                       className={`rounded-xl border px-3 py-3 text-left text-sm font-semibold transition ${
                         answer === choice
-                          ? choice === lesson.answer
+                          ? choice === activeLesson.answer
                             ? "border-[#67c9a0] bg-[#e5f8ef] text-[#318c60]"
                             : "border-[#efab87] bg-[#fff1e9] text-[#bd6d39]"
                           : "border-[#dfeef1] text-[#6e8c97] hover:border-[#8ad5e4]"
@@ -391,23 +377,25 @@ export default function TopicLesson() {
                 {answer && (
                   <p
                     className={`mt-3 text-xs font-semibold ${
-                      answer === lesson.answer ? "text-[#318c60]" : "text-[#bd6d39]"
+                      answer === activeLesson.answer ? "text-[#318c60]" : "text-[#bd6d39]"
                     }`}
                   >
-                    {answer === lesson.answer
+                    {answer === activeLesson.answer
                       ? "Correct — great reasoning."
-                      : `Not quite. Try again: ${lesson.answer} is the best answer.`}
+                      : `Not quite. Try again: ${activeLesson.answer} is the best answer.`}
                   </p>
                 )}
               </div>
 
               <button
                 onClick={completeLesson}
-                disabled={completed}
+                disabled={isLessonCompleted}
                 className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#159ac1] text-sm font-bold text-white transition hover:bg-[#1088aa] disabled:cursor-default disabled:bg-[#67c9a0]"
               >
                 <CheckCircle2 className="h-4 w-4" />
-                {completed ? "Lesson completed (+15 min logged)" : "Mark lesson complete"}
+                {isLessonCompleted
+                  ? `Lesson ${activeLessonIdx + 1} completed (+15 min logged)`
+                  : `Mark Lesson ${activeLessonIdx + 1} complete`}
               </button>
             </article>
 
@@ -418,7 +406,7 @@ export default function TopicLesson() {
                 </div>
                 <h2 className="mt-5 text-xl font-bold text-[#1d596b]">Keep exploring</h2>
                 <p className="mt-2 text-sm leading-6 text-[#5e8a97]">
-                  Use the interactive visual simulation above, answer the check, and mark this topic complete when
+                  Use the interactive visual simulation above, answer the check, and mark this lesson complete when
                   you’re ready.
                 </p>
               </div>
@@ -428,7 +416,7 @@ export default function TopicLesson() {
                   <RotateCcw className="h-4 w-4 text-[#159ac1]" /> Topic status
                 </div>
                 <p className="mt-4 text-3xl font-bold text-[#214554]">
-                  {completed ? "Complete" : `${progress}%`}
+                  {calculatedProgress === 100 ? "Complete" : `${calculatedProgress}%`}
                 </p>
                 <p className="mt-1 text-xs text-[#9bb2ba]">
                   Progress and study time are updated live on your dashboard.

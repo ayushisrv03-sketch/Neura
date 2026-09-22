@@ -6,8 +6,9 @@ import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { BookOpenCheck, CheckSquare2, LayoutDashboard, LineChart, LogIn, LogOut, PanelLeft, Sparkles } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
+import { TopicSidebar } from "./TopicSidebar";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Overview", path: "/dashboard" },
@@ -53,6 +54,10 @@ export default function DashboardLayout({ children, allowGuest = false }: { chil
 function DashboardLayoutContent({ children, setSidebarWidth }: { children: React.ReactNode; setSidebarWidth: (width: number) => void }) {
   const { user, logout } = useAuth();
   const [location, setLocation] = useLocation();
+  const [topicMatch, topicParams] = useRoute("/dashboard/lessons/:topic");
+  const isTopicRoute = Boolean(topicMatch && topicParams?.topic);
+  const currentTopic = topicParams?.topic ? decodeURIComponent(topicParams.topic) : "";
+
   const { state, toggleSidebar } = useSidebar();
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -96,23 +101,29 @@ function DashboardLayoutContent({ children, setSidebarWidth }: { children: React
     <>
       <div className="relative" ref={sidebarRef}>
         <Sidebar collapsible="icon" className="border-r-0 bg-white" disableTransition={isResizing}>
-          <SidebarHeader className="h-20 justify-center border-b border-[#e6f0f3] px-4">
-            <div className="flex items-center gap-3">
-              <button onClick={toggleSidebar} aria-label="Toggle navigation" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#e3f7fb] text-[#159ac1] transition hover:bg-[#d4f1f8] focus-visible:ring-2 focus-visible:ring-[#159ac1]"><PanelLeft className="h-4 w-4" /></button>
-              {!isCollapsed && <div className="flex items-center gap-2"><div className="grid h-8 w-8 place-items-center rounded-xl bg-[#159ac1] text-white"><Sparkles className="h-4 w-4" /></div><span className="text-lg font-bold tracking-tight text-[#173c4b]">neura</span></div>}
-            </div>
-          </SidebarHeader>
-          <SidebarContent className="gap-0 px-3 py-5">
-            <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[.16em] text-[#a2bac3] group-data-[collapsible=icon]:hidden">Workspace</p>
-            <SidebarMenu>
-              {menuItems.map(item => {
-                const isActive = item.path === location || (item.path === "/" && location === "/");
-                return <SidebarMenuItem key={item.path}><SidebarMenuButton isActive={isActive} onClick={() => navigate(item.path)} tooltip={item.label} className="mb-1 h-11 rounded-xl px-3 font-medium text-[#6c8995] transition data-[active=true]:bg-[#e5f8fc] data-[active=true]:text-[#128eaf] hover:bg-[#f0fafc]">
-                  <item.icon className="h-[18px] w-[18px]" /><span>{item.label}</span>
-                </SidebarMenuButton></SidebarMenuItem>;
-              })}
-            </SidebarMenu>
-          </SidebarContent>
+          {isTopicRoute ? (
+            <TopicSidebar topicName={currentTopic} />
+          ) : (
+            <>
+              <SidebarHeader className="h-20 justify-center border-b border-[#e6f0f3] px-4">
+                <div className="flex items-center gap-3">
+                  <button onClick={toggleSidebar} aria-label="Toggle navigation" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#e3f7fb] text-[#159ac1] transition hover:bg-[#d4f1f8] focus-visible:ring-2 focus-visible:ring-[#159ac1]"><PanelLeft className="h-4 w-4" /></button>
+                  {!isCollapsed && <div className="flex items-center gap-2"><div className="grid h-8 w-8 place-items-center rounded-xl bg-[#159ac1] text-white"><Sparkles className="h-4 w-4" /></div><span className="text-lg font-bold tracking-tight text-[#173c4b]">neura</span></div>}
+                </div>
+              </SidebarHeader>
+              <SidebarContent className="gap-0 px-3 py-5">
+                <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[.16em] text-[#a2bac3] group-data-[collapsible=icon]:hidden">Workspace</p>
+                <SidebarMenu>
+                  {menuItems.map(item => {
+                    const isActive = item.path === location || (item.path === "/" && location === "/");
+                    return <SidebarMenuItem key={item.path}><SidebarMenuButton isActive={isActive} onClick={() => navigate(item.path)} tooltip={item.label} className="mb-1 h-11 rounded-xl px-3 font-medium text-[#6c8995] transition data-[active=true]:bg-[#e5f8fc] data-[active=true]:text-[#128eaf] hover:bg-[#f0fafc]">
+                      <item.icon className="h-[18px] w-[18px]" /><span>{item.label}</span>
+                    </SidebarMenuButton></SidebarMenuItem>;
+                  })}
+                </SidebarMenu>
+              </SidebarContent>
+            </>
+          )}
           <SidebarFooter className="border-t border-[#e6f0f3] p-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild><button className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition hover:bg-[#f1fafc] focus-visible:ring-2 focus-visible:ring-[#159ac1] group-data-[collapsible=icon]:justify-center"><Avatar className="h-9 w-9 shrink-0 border-2 border-[#dff4f8]"><AvatarFallback className="bg-[#dff4f8] text-xs font-bold text-[#159ac1]">{displayName.slice(0, 2).toUpperCase()}</AvatarFallback></Avatar><div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden"><p className="truncate text-sm font-semibold text-[#234b5b]">{displayName}</p><p className="mt-0.5 truncate text-xs text-[#8ba5ae]">{displayEmail}</p></div></button></DropdownMenuTrigger>
@@ -123,7 +134,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: { children: React
         <div className={`absolute right-0 top-0 h-full w-1 cursor-col-resize transition-colors hover:bg-[#159ac1]/20 ${isCollapsed ? "hidden" : ""}`} onMouseDown={() => setIsResizing(true)} />
       </div>
       <SidebarInset className="bg-[#f6fbfd]">
-        {isMobile && <div className="sticky top-0 z-40 flex h-14 items-center gap-2 border-b border-[#e6f0f3] bg-white/95 px-3 backdrop-blur"><SidebarTrigger className="h-9 w-9 rounded-lg" /><span className="text-sm font-semibold text-[#234b5b]">{activeMenuItem.label}</span></div>}
+        {isMobile && <div className="sticky top-0 z-40 flex h-14 items-center gap-2 border-b border-[#e6f0f3] bg-white/95 px-3 backdrop-blur"><SidebarTrigger className="h-9 w-9 rounded-lg" /><span className="text-sm font-semibold text-[#234b5b]">{isTopicRoute ? `${currentTopic} Lessons` : activeMenuItem.label}</span></div>}
         <main className="min-h-screen p-0">{children}</main>
       </SidebarInset>
     </>
