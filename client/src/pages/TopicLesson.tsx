@@ -5,16 +5,13 @@ import LinearEquationVisual from "@/components/visuals/LinearEquationVisual";
 import PhotosynthesisVisual from "@/components/visuals/PhotosynthesisVisual";
 import PlantPartsVisual from "@/components/visuals/PlantPartsVisual";
 import StatesOfMatterVisual from "@/components/visuals/StatesOfMatterVisual";
-<<<<<<< HEAD
 import {
   getTopicCompletedLessons,
   getTopicCurriculum,
   lessons,
   setTopicLessonCompleted,
 } from "@/lib/topicCurriculum";
-=======
 import { useLearningPreferences } from "@/hooks/useLearningPreferences";
->>>>>>> 09fa07f (Changed the lessons working)
 import { trpc } from "@/lib/trpc";
 import {
   ArrowLeft,
@@ -64,7 +61,6 @@ export default function TopicLesson() {
   const { data } = trpc.dashboard.overview.useQuery();
   const utils = trpc.useUtils();
   const logStudy = trpc.dashboard.logStudy.useMutation();
-<<<<<<< HEAD
 
   const [completedIndices, setCompletedIndices] = useState<number[]>(() =>
     getTopicCompletedLessons(topic)
@@ -82,9 +78,7 @@ export default function TopicLesson() {
     return 0;
   });
 
-=======
   const { selectedSubjects, setSelectedSubjects, isSubjectSelected, subjectSummary } = useLearningPreferences();
->>>>>>> 09fa07f (Changed the lessons working)
   const [answer, setAnswer] = useState<string | null>(null);
   const [activeMode, setActiveMode] = useState<"steps" | "visual" | "example" | "simple" | "hint" | "stuck" | "visual">(
     "visual"
@@ -124,40 +118,35 @@ export default function TopicLesson() {
 
   const course = useMemo(() => data?.courses.find((item) => item.title === topic), [data, topic]);
 
-<<<<<<< HEAD
   if (!topic || !curriculum) {
-=======
-  const furtherLessons = useMemo(() => {
-    return (Object.entries(lessons) as [Topic, typeof lessons[Topic]][])
-      .filter(([title, l]) => title !== topic && isSubjectSelected(l.subject))
-      .map(([title, l]) => ({ title, ...l }));
-  }, [topic, isSubjectSelected]);
+    const furtherLessons = useMemo(() => {
+      return (Object.entries(lessons) as [Topic, typeof lessons[Topic]][])
+        .filter(([title, l]) => title !== topic && isSubjectSelected(l.subject))
+        .map(([title, l]) => ({ title, ...l }));
+    }, [topic, isSubjectSelected]);
 
-  const nextTopic = furtherLessons[0];
+    const nextTopic = furtherLessons[0];
 
-  if (!lesson)
->>>>>>> 09fa07f (Changed the lessons working)
-    return (
-      <DashboardLayout allowGuest>
-        <div className="min-h-screen bg-[#f6fbfd] p-8 text-[#214554]">
-          <button
-            onClick={() => setLocation("/dashboard")}
-            className="flex items-center gap-2 text-sm font-bold text-[#159ac1]"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back to dashboard
-          </button>
-          <h1 className="mt-8 text-2xl font-bold">Lesson not found</h1>
-        </div>
-      </DashboardLayout>
-    );
+    if (!lesson)
+      return (
+        <DashboardLayout allowGuest>
+          <div className="min-h-screen bg-[#f6fbfd] p-8 text-[#214554]">
+            <button
+              onClick={() => setLocation("/dashboard")}
+              className="flex items-center gap-2 text-sm font-bold text-[#159ac1]"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back to dashboard
+            </button>
+            <h1 className="mt-8 text-2xl font-bold">Lesson not found</h1>
+          </div>
+        </DashboardLayout>
+      );
   }
 
   const totalLessonsCount = curriculum.lessons.length;
   const completedLessonsCount = completedIndices.length;
   const calculatedProgress = Math.round((completedLessonsCount / totalLessonsCount) * 100);
 
-<<<<<<< HEAD
-=======
   if (!isSubjectSelected(lesson.subject))
     return (
       <DashboardLayout allowGuest>
@@ -201,7 +190,6 @@ export default function TopicLesson() {
   const progress = course?.progress ?? 0;
   const lessonsCompleted = course?.lessonsCompleted ?? 0;
   const lessonsTotal = course?.lessonsTotal ?? 1;
->>>>>>> 09fa07f (Changed the lessons working)
   const completeLesson = () => {
     if (isLessonCompleted) return;
     const updated = setTopicLessonCompleted(topic, activeLessonIdx);
@@ -329,61 +317,55 @@ export default function TopicLesson() {
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setActiveMode("visual")}
-                    className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
-                      activeMode === "visual"
+                    className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "visual"
                         ? "bg-[#159ac1] text-white"
                         : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
-                    }`}
+                      }`}
                   >
                     <Eye className="mr-1 inline h-3.5 w-3.5" /> Show visually
                   </button>
                   <button
                     onClick={() => setActiveMode("steps")}
-                    className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
-                      activeMode === "steps"
+                    className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "steps"
                         ? "bg-[#159ac1] text-white"
                         : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
-                    }`}
+                      }`}
                   >
                     <Sparkles className="mr-1 inline h-3.5 w-3.5" /> Step by step
                   </button>
                   <button
                     onClick={() => setActiveMode("example")}
-                    className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
-                      activeMode === "example"
+                    className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "example"
                         ? "bg-[#159ac1] text-white"
                         : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
-                    }`}
+                      }`}
                   >
                     <Lightbulb className="mr-1 inline h-3.5 w-3.5" /> Show an example
                   </button>
                   <button
                     onClick={() => setActiveMode("simple")}
-                    className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
-                      activeMode === "simple"
+                    className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "simple"
                         ? "bg-[#159ac1] text-white"
                         : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
-                    }`}
+                      }`}
                   >
                     <BookOpenIcon /> Explain simply
                   </button>
                   <button
                     onClick={() => setActiveMode("hint")}
-                    className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
-                      activeMode === "hint"
+                    className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "hint"
                         ? "bg-[#159ac1] text-white"
                         : "bg-[#f0edff] text-[#8979d5] hover:bg-[#e7e2f7]"
-                    }`}
+                      }`}
                   >
                     <HelpCircle className="mr-1 inline h-3.5 w-3.5" /> Give me a hint
                   </button>
                   <button
                     onClick={() => setActiveMode("stuck")}
-                    className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
-                      activeMode === "stuck"
+                    className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "stuck"
                         ? "bg-[#ef946e] text-white"
                         : "bg-[#fff1e9] text-[#bd6d39] hover:bg-[#ffe4d7]"
-                    }`}
+                      }`}
                   >
                     <HelpCircle className="mr-1 inline h-3.5 w-3.5" /> I’m stuck
                   </button>
@@ -398,12 +380,12 @@ export default function TopicLesson() {
                         {activeMode === "steps"
                           ? "Step-by-step explanation"
                           : activeMode === "example"
-                          ? "Example learning"
-                          : activeMode === "simple"
-                          ? "Simpler explanation"
-                          : activeMode === "hint"
-                          ? "A gentle hint"
-                          : "You are not alone"}
+                            ? "Example learning"
+                            : activeMode === "simple"
+                              ? "Simpler explanation"
+                              : activeMode === "hint"
+                                ? "A gentle hint"
+                                : "You are not alone"}
                       </span>
                       <button onClick={() => setActiveMode("visual")} className="text-xs font-semibold text-[#159ac1]">
                         Hide extra details
@@ -430,13 +412,12 @@ export default function TopicLesson() {
                     <button
                       key={choice}
                       onClick={() => setAnswer(choice)}
-                      className={`rounded-xl border px-3 py-3 text-left text-sm font-semibold transition ${
-                        answer === choice
+                      className={`rounded-xl border px-3 py-3 text-left text-sm font-semibold transition ${answer === choice
                           ? choice === activeLesson.answer
                             ? "border-[#67c9a0] bg-[#e5f8ef] text-[#318c60]"
                             : "border-[#efab87] bg-[#fff1e9] text-[#bd6d39]"
                           : "border-[#dfeef1] text-[#6e8c97] hover:border-[#8ad5e4]"
-                      }`}
+                        }`}
                     >
                       {choice}
                     </button>
@@ -444,9 +425,8 @@ export default function TopicLesson() {
                 </div>
                 {answer && (
                   <p
-                    className={`mt-3 text-xs font-semibold ${
-                      answer === activeLesson.answer ? "text-[#318c60]" : "text-[#bd6d39]"
-                    }`}
+                    className={`mt-3 text-xs font-semibold ${answer === activeLesson.answer ? "text-[#318c60]" : "text-[#bd6d39]"
+                      }`}
                   >
                     {answer === activeLesson.answer
                       ? "Correct — great reasoning."
