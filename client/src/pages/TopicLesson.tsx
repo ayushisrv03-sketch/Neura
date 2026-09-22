@@ -1,10 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
-import FractionVisual from "@/components/visuals/FractionVisual";
-import GeometryVisual from "@/components/visuals/GeometryVisual";
-import LinearEquationVisual from "@/components/visuals/LinearEquationVisual";
-import PhotosynthesisVisual from "@/components/visuals/PhotosynthesisVisual";
-import PlantPartsVisual from "@/components/visuals/PlantPartsVisual";
-import StatesOfMatterVisual from "@/components/visuals/StatesOfMatterVisual";
+import { LessonVisualDispatcher } from "@/components/visuals/LessonVisualDispatcher";
 import {
   getTopicCompletedLessons,
   getTopicCurriculum,
@@ -15,8 +10,6 @@ import { useLearningPreferences } from "@/hooks/useLearningPreferences";
 import { trpc } from "@/lib/trpc";
 import {
   ArrowLeft,
-  ArrowRight,
-  BookOpen,
   CheckCircle2,
   Clock3,
   Eye,
@@ -30,27 +23,6 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useRoute } from "wouter";
-
-type SupportedTopic = "Fractions" | "Linear equations" | "Geometry" | "Photosynthesis" | "States of matter" | "Parts of a plant";
-
-function renderVisualComponent(topic: string) {
-  switch (topic) {
-    case "Fractions":
-      return <FractionVisual />;
-    case "Linear equations":
-      return <LinearEquationVisual />;
-    case "Geometry":
-      return <GeometryVisual />;
-    case "Photosynthesis":
-      return <PhotosynthesisVisual />;
-    case "States of matter":
-      return <StatesOfMatterVisual />;
-    case "Parts of a plant":
-      return <PlantPartsVisual />;
-    default:
-      return null;
-  }
-}
 
 export default function TopicLesson() {
   const [, params] = useRoute("/dashboard/lessons/:topic");
@@ -78,7 +50,6 @@ export default function TopicLesson() {
     return 0;
   });
 
-  const { selectedSubjects, setSelectedSubjects, isSubjectSelected, subjectSummary } = useLearningPreferences();
   const [answer, setAnswer] = useState<string | null>(null);
   const [activeMode, setActiveMode] = useState<"steps" | "visual" | "example" | "simple" | "hint" | "stuck" | "visual">(
     "visual"
@@ -97,7 +68,8 @@ export default function TopicLesson() {
         setActiveLessonIdx(0);
       }
       setCompletedIndices(getTopicCompletedLessons(topic));
-      setAnswer(null);
+      setAnswers({});
+      setCurrentQIdx(0);
     };
 
     window.addEventListener("popstate", handleSync);
@@ -111,7 +83,9 @@ export default function TopicLesson() {
 
   useEffect(() => {
     setCompletedIndices(getTopicCompletedLessons(topic));
-  }, [topic]);
+    setAnswers({});
+    setCurrentQIdx(0);
+  }, [topic, activeLessonIdx]);
 
   const activeLesson = curriculum.lessons[activeLessonIdx] || curriculum.lessons[0];
   const isLessonCompleted = completedIndices.includes(activeLessonIdx);
@@ -147,58 +121,29 @@ export default function TopicLesson() {
   const completedLessonsCount = completedIndices.length;
   const calculatedProgress = Math.round((completedLessonsCount / totalLessonsCount) * 100);
 
-  if (!isSubjectSelected(lesson.subject))
-    return (
-      <DashboardLayout allowGuest>
-        <div className="min-h-screen bg-[#f6fbfd] p-8 text-[#214554]">
-          <button
-            onClick={() => setLocation("/dashboard")}
-            className="flex items-center gap-2 text-sm font-bold text-[#159ac1] transition hover:text-[#0e7795]"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back to dashboard
-          </button>
-          <div className="mt-8 max-w-lg rounded-2xl border border-[#dff0f4] bg-white p-8 shadow-[0_10px_35px_rgba(27,91,109,0.04)]">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3.5 py-1.5 text-xs font-bold text-amber-800 border border-amber-200">
-              <GraduationCap className="h-4 w-4" /> Subject not in active curriculum
-            </div>
-            <h1 className="text-2xl font-bold text-[#173c4b]">{topic}</h1>
-            <p className="mt-2 text-sm leading-relaxed text-[#7897a2]">
-              This topic belongs to <strong>{lesson.subject}</strong>. Your current curriculum is set to{" "}
-              <strong>{subjectSummary}</strong>.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button
-                onClick={() => setLocation("/dashboard")}
-                className="rounded-xl bg-[#159ac1] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1088aa]"
-              >
-                Return to {subjectSummary}
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedSubjects([...selectedSubjects, lesson.subject]);
-                }}
-                className="rounded-xl border border-[#dfeef1] bg-white px-5 py-2.5 text-sm font-bold text-[#6e8c97] transition hover:bg-[#f0fafc] hover:text-[#159ac1]"
-              >
-                Enable {lesson.subject} &amp; continue
-              </button>
-            </div>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-
-  const progress = course?.progress ?? 0;
-  const lessonsCompleted = course?.lessonsCompleted ?? 0;
-  const lessonsTotal = course?.lessonsTotal ?? 1;
   const completeLesson = () => {
     if (isLessonCompleted) return;
     const updated = setTopicLessonCompleted(topic, activeLessonIdx);
     setCompletedIndices(updated);
+
     if (course) {
       logStudy.mutate(
         { courseId: course.id, minutes: 15 },
         { onSuccess: () => void utils.dashboard.overview.invalidate() }
       );
+    }
+
+    if (!isLastLesson) {
+      const nextIdx = activeLessonIdx + 1;
+      setActiveLessonIdx(nextIdx);
+      const search = new URLSearchParams(window.location.search);
+      search.set("lesson", (nextIdx + 1).toString());
+      const newUrl = `${window.location.pathname}?${search.toString()}`;
+      window.history.pushState({}, "", newUrl);
+      window.dispatchEvent(new Event("popstate"));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      setLocation("/dashboard");
     }
   };
 
@@ -215,7 +160,7 @@ export default function TopicLesson() {
         <p className="text-sm font-semibold text-[#315866]">
           Interactive Visual Model — test controls & observe live changes:
         </p>
-        {renderVisualComponent(topic)}
+        <LessonVisualDispatcher topic={topic} lessonIndex={activeLessonIdx} />
       </div>
     ) : activeMode === "example" ? (
       <div>
@@ -308,7 +253,7 @@ export default function TopicLesson() {
                     Live Simulation
                   </span>
                 </div>
-                {renderVisualComponent(topic)}
+                <LessonVisualDispatcher topic={topic} lessonIndex={activeLessonIdx} />
               </div>
 
               {/* Mode Switcher */}
@@ -318,8 +263,8 @@ export default function TopicLesson() {
                   <button
                     onClick={() => setActiveMode("visual")}
                     className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "visual"
-                        ? "bg-[#159ac1] text-white"
-                        : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
+                      ? "bg-[#159ac1] text-white"
+                      : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
                       }`}
                   >
                     <Eye className="mr-1 inline h-3.5 w-3.5" /> Show visually
@@ -327,8 +272,8 @@ export default function TopicLesson() {
                   <button
                     onClick={() => setActiveMode("steps")}
                     className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "steps"
-                        ? "bg-[#159ac1] text-white"
-                        : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
+                      ? "bg-[#159ac1] text-white"
+                      : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
                       }`}
                   >
                     <Sparkles className="mr-1 inline h-3.5 w-3.5" /> Step by step
@@ -336,8 +281,8 @@ export default function TopicLesson() {
                   <button
                     onClick={() => setActiveMode("example")}
                     className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "example"
-                        ? "bg-[#159ac1] text-white"
-                        : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
+                      ? "bg-[#159ac1] text-white"
+                      : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
                       }`}
                   >
                     <Lightbulb className="mr-1 inline h-3.5 w-3.5" /> Show an example
@@ -345,8 +290,8 @@ export default function TopicLesson() {
                   <button
                     onClick={() => setActiveMode("simple")}
                     className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "simple"
-                        ? "bg-[#159ac1] text-white"
-                        : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
+                      ? "bg-[#159ac1] text-white"
+                      : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
                       }`}
                   >
                     <BookOpenIcon /> Explain simply
@@ -354,8 +299,8 @@ export default function TopicLesson() {
                   <button
                     onClick={() => setActiveMode("hint")}
                     className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "hint"
-                        ? "bg-[#159ac1] text-white"
-                        : "bg-[#f0edff] text-[#8979d5] hover:bg-[#e7e2f7]"
+                      ? "bg-[#159ac1] text-white"
+                      : "bg-[#f0edff] text-[#8979d5] hover:bg-[#e7e2f7]"
                       }`}
                   >
                     <HelpCircle className="mr-1 inline h-3.5 w-3.5" /> Give me a hint
@@ -363,8 +308,8 @@ export default function TopicLesson() {
                   <button
                     onClick={() => setActiveMode("stuck")}
                     className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "stuck"
-                        ? "bg-[#ef946e] text-white"
-                        : "bg-[#fff1e9] text-[#bd6d39] hover:bg-[#ffe4d7]"
+                      ? "bg-[#ef946e] text-white"
+                      : "bg-[#fff1e9] text-[#bd6d39] hover:bg-[#ffe4d7]"
                       }`}
                   >
                     <HelpCircle className="mr-1 inline h-3.5 w-3.5" /> I’m stuck
@@ -404,9 +349,41 @@ export default function TopicLesson() {
                 <p className="mt-2 text-sm leading-6 text-[#5e8a97]">{activeLesson.activity}</p>
               </div>
 
+              {/* Multi-Question Understanding Check Quiz */}
               <div className="mt-6 rounded-2xl border border-[#e5f0f3] p-5">
-                <p className="text-sm font-bold text-[#315866]">Quick understanding check</p>
-                <p className="mt-3 text-sm text-[#66828c]">{activeLesson.question}</p>
+                <div className="flex items-center justify-between border-b border-[#f0f7f9] pb-3 mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-[#315866]">Understanding Check</span>
+                    <span className="rounded-full bg-[#e8f8fc] px-2.5 py-0.5 text-xs font-bold text-[#159ac1]">
+                      Question {currentQIdx + 1} of {lessonQuestions.length}
+                    </span>
+                  </div>
+                  {answeredCount > 0 && (
+                    <span className="text-xs font-bold text-[#277f59] bg-[#eaf7f1] px-2.5 py-1 rounded-full">
+                      Score: {correctCount}/{lessonQuestions.length}
+                    </span>
+                  )}
+                </div>
+
+                {/* Question Selector Tabs */}
+                <div className="flex gap-2 mb-4">
+                  {lessonQuestions.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentQIdx(idx)}
+                      className={`rounded-lg px-3 py-1 text-xs font-bold transition ${currentQIdx === idx
+                          ? "bg-[#159ac1] text-white"
+                          : answers[idx]
+                            ? "bg-[#eaf7f1] text-[#277f59]"
+                            : "bg-[#edf5f7] text-[#6e8c97] hover:bg-[#e2eff2]"
+                        }`}
+                    >
+                      Q{idx + 1} {answers[idx] ? "✓" : ""}
+                    </button>
+                  ))}
+                </div>
+
+                <p className="text-sm font-semibold text-[#214554]">{activeQ.question}</p>
                 <div className="mt-4 grid gap-2 sm:grid-cols-3">
                   {activeLesson.choices.map((choice) => (
                     <button
@@ -423,14 +400,14 @@ export default function TopicLesson() {
                     </button>
                   ))}
                 </div>
-                {answer && (
+                {answers[currentQIdx] && (
                   <p
                     className={`mt-3 text-xs font-semibold ${answer === activeLesson.answer ? "text-[#318c60]" : "text-[#bd6d39]"
                       }`}
                   >
-                    {answer === activeLesson.answer
+                    {answers[currentQIdx] === activeQ.answer
                       ? "Correct — great reasoning."
-                      : `Not quite. Try again: ${activeLesson.answer} is the best answer.`}
+                      : `Not quite. Correct answer: ${activeQ.answer}`}
                   </p>
                 )}
               </div>
@@ -445,14 +422,6 @@ export default function TopicLesson() {
                   ? `Lesson ${activeLessonIdx + 1} completed (+15 min logged)`
                   : `Mark Lesson ${activeLessonIdx + 1} complete`}
               </button>
-              {completed && nextTopic && (
-                <button
-                  onClick={() => setLocation(`/dashboard/lessons/${encodeURIComponent(nextTopic.title)}`)}
-                  className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#159ac1] bg-[#e8f8fc] text-sm font-bold text-[#159ac1] transition hover:bg-[#d4f2f8]"
-                >
-                  Continue to next lesson: {nextTopic.title} <ArrowRight className="h-4 w-4" />
-                </button>
-              )}
             </article>
 
             <aside className="space-y-5">
@@ -462,8 +431,7 @@ export default function TopicLesson() {
                 </div>
                 <h2 className="mt-5 text-xl font-bold text-[#1d596b]">Keep exploring</h2>
                 <p className="mt-2 text-sm leading-6 text-[#5e8a97]">
-                  Use the interactive visual simulation above, answer the check, and mark this lesson complete when
-                  you’re ready.
+                  Use the interactive visual simulation above, answer all 3 questions, and click Next Lesson to advance.
                 </p>
               </div>
 
