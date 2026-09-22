@@ -315,7 +315,54 @@ function StatCard({ icon, label, value, helper, accent }: { icon: React.ReactNod
 
 function CourseCard({ course, onStart }: { course: { id: number; title: string; subject: string; level: string; progress: number; lessonsCompleted: number; lessonsTotal: number; nextLesson: string; accent: string; icon: string }; onStart: () => void }) {
   const color = progressColor(course.accent);
-  return <article className="group rounded-2xl border border-[#dff0f4] bg-white p-5 shadow-[0_10px_35px_rgba(27,91,109,0.04)] transition hover:-translate-y-1 hover:shadow-[0_15px_35px_rgba(27,91,109,0.09)]"><div className="mb-5 flex items-start justify-between"><div className="grid h-11 w-11 place-items-center rounded-2xl" style={{ backgroundColor: `${color}22`, color }}><span>{courseIcon(course.icon)}</span></div><button onClick={() => toast(course.title, { description: `${course.lessonsCompleted} of ${course.lessonsTotal} lessons complete.` })} aria-label={`More details for ${course.title}`} className="grid h-8 w-8 place-items-center rounded-lg text-[#a6bbc2] hover:bg-[#f3fafb]"><MoreHorizontal className="h-4 w-4" /></button></div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#94aeb7]">{course.subject} · {course.level}</p><h3 className="mt-1.5 text-lg font-bold tracking-tight text-[#214554]">{course.title}</h3><div className="mt-5 flex items-center justify-between text-xs"><span className="font-semibold text-[#7f9ba5]">{course.progress}% complete</span><span className="text-[#a1b6bd]">{course.lessonsCompleted}/{course.lessonsTotal} lessons</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[#edf5f7]"><div className="h-full rounded-full transition-all duration-500" style={{ width: `${course.progress}%`, backgroundColor: color }} /></div><div className="mt-5 flex items-center justify-between gap-3 border-t border-[#edf4f6] pt-4"><div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-wider text-[#a0b5bc]">Next up</p><p className="mt-1 truncate text-xs font-semibold text-[#53737e]">{course.nextLesson}</p></div><button onClick={onStart} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white transition hover:scale-105" style={{ backgroundColor: color }} aria-label={`Continue ${course.title}`}><Play className="h-3.5 w-3.5 fill-current" /></button></div></article>;
+  return (
+    <article
+      onClick={onStart}
+      className="group cursor-pointer rounded-2xl border border-[#dff0f4] bg-white p-5 shadow-[0_10px_35px_rgba(27,91,109,0.04)] transition hover:-translate-y-1 hover:shadow-[0_15px_35px_rgba(27,91,109,0.09)]"
+    >
+      <div className="mb-5 flex items-start justify-between">
+        <div className="grid h-11 w-11 place-items-center rounded-2xl" style={{ backgroundColor: `${color}22`, color }}>
+          <span>{courseIcon(course.icon)}</span>
+        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            toast(course.title, { description: `${course.lessonsCompleted} of ${course.lessonsTotal} lessons complete.` });
+          }}
+          aria-label={`More details for ${course.title}`}
+          className="grid h-8 w-8 place-items-center rounded-lg text-[#a6bbc2] hover:bg-[#f3fafb]"
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </button>
+      </div>
+      <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#94aeb7]">{course.subject} · {course.level}</p>
+      <h3 className="mt-1.5 text-lg font-bold tracking-tight text-[#214554]">{course.title}</h3>
+      <div className="mt-5 flex items-center justify-between text-xs">
+        <span className="font-semibold text-[#7f9ba5]">{course.progress}% complete</span>
+        <span className="text-[#a1b6bd]">{course.lessonsCompleted}/{course.lessonsTotal} lessons</span>
+      </div>
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#edf5f7]">
+        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${course.progress}%`, backgroundColor: color }} />
+      </div>
+      <div className="mt-5 flex items-center justify-between gap-3 border-t border-[#edf4f6] pt-4">
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-[#a0b5bc]">Next up</p>
+          <p className="mt-1 truncate text-xs font-semibold text-[#53737e]">{course.nextLesson}</p>
+        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onStart();
+          }}
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white transition hover:scale-105"
+          style={{ backgroundColor: color }}
+          aria-label={`Continue ${course.title}`}
+        >
+          <Play className="h-3.5 w-3.5 fill-current" />
+        </button>
+      </div>
+    </article>
+  );
 }
 
 function ActivityItem({ icon, title, subtitle, time, color }: { icon: React.ReactNode; title: string; subtitle: string; time: string; color: string }) {
