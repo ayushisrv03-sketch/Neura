@@ -10,6 +10,8 @@ import { useLearningPreferences } from "@/hooks/useLearningPreferences";
 import { trpc } from "@/lib/trpc";
 import {
   ArrowLeft,
+  ArrowRight,
+  BookOpen,
   CheckCircle2,
   Clock3,
   Eye,
@@ -30,6 +32,8 @@ export default function TopicLesson() {
   const topic = decodeURIComponent(params?.topic ?? "");
   const curriculum = useMemo(() => getTopicCurriculum(topic), [topic]);
 
+  const { selectedSubjects, setSelectedSubjects, isSubjectSelected, subjectSummary } = useLearningPreferences();
+
   const { data } = trpc.dashboard.overview.useQuery();
   const utils = trpc.useUtils();
   const logStudy = trpc.dashboard.logStudy.useMutation();
@@ -44,22 +48,23 @@ export default function TopicLesson() {
       const param = search.get("lesson");
       if (param) {
         const parsed = parseInt(param, 10) - 1;
-        if (parsed >= 0 && parsed < curriculum.lessons.length) return parsed;
+        if (parsed >= 0 && parsed < (curriculum?.lessons?.length ?? 0)) return parsed;
       }
     }
     return 0;
   });
 
-  const [answer, setAnswer] = useState<string | null>(null);
-  const [activeMode, setActiveMode] = useState<"steps" | "visual" | "example" | "simple" | "hint" | "stuck" | "visual">(
+  const [activeMode, setActiveMode] = useState<"steps" | "visual" | "example" | "simple" | "hint" | "stuck">(
     "visual"
   );
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [currentQIdx, setCurrentQIdx] = useState<number>(0);
 
   useEffect(() => {
     const handleSync = () => {
       const search = new URLSearchParams(window.location.search);
       const param = search.get("lesson");
-      if (param) {
+      if (param && curriculum) {
         const parsed = parseInt(param, 10) - 1;
         if (parsed >= 0 && parsed < curriculum.lessons.length) {
           setActiveLessonIdx(parsed);
@@ -79,7 +84,7 @@ export default function TopicLesson() {
       window.removeEventListener("popstate", handleSync);
       window.removeEventListener("neura-lesson-completed", handleSync);
     };
-  }, [topic, curriculum.lessons.length]);
+  }, [topic, curriculum?.lessons?.length]);
 
   useEffect(() => {
     setCompletedIndices(getTopicCompletedLessons(topic));
@@ -89,6 +94,27 @@ export default function TopicLesson() {
 
   const activeLesson = curriculum?.lessons?.[activeLessonIdx] || curriculum?.lessons?.[0];
   const isLessonCompleted = completedIndices.includes(activeLessonIdx);
+  const isLastLesson = curriculum ? activeLessonIdx >= curriculum.lessons.length - 1 : true;
+
+  const lessonQuestions = useMemo(() => {
+    if (!activeLesson) return [];
+    if (Array.isArray((activeLesson as any).questions) && (activeLesson as any).questions.length > 0) {
+      return (activeLesson as any).questions as { question: string; choices: string[]; answer: string }[];
+    }
+    return [
+      {
+        question: activeLesson.question,
+        choices: activeLesson.choices,
+        answer: activeLesson.answer,
+      },
+    ];
+  }, [activeLesson]);
+
+  const activeQ = lessonQuestions[currentQIdx] || lessonQuestions[0] || activeLesson;
+  const answeredCount = Object.keys(answers).length;
+  const correctCount = Object.entries(answers).filter(
+    ([idx, ans]) => lessonQuestions[Number(idx)]?.answer === ans
+  ).length;
 
   const course = useMemo(() => data?.courses.find((item) => item.title === topic), [data, topic]);
 
@@ -124,8 +150,6 @@ export default function TopicLesson() {
       ? Math.round((completedLessonsCount / totalLessonsCount) * 100)
       : 0;
 
-<<<<<<< Updated upstream
-=======
   if (!isSubjectSelected(curriculum.subject))
     return (
       <DashboardLayout allowGuest>
@@ -169,7 +193,6 @@ export default function TopicLesson() {
   const progress = course?.progress ?? 0;
   const lessonsCompleted = course?.lessonsCompleted ?? 0;
   const lessonsTotal = course?.lessonsTotal ?? 1;
->>>>>>> Stashed changes
   const completeLesson = () => {
     if (isLessonCompleted) return;
     const updated = setTopicLessonCompleted(topic, activeLessonIdx);
@@ -416,7 +439,7 @@ export default function TopicLesson() {
 
                 {/* Question Selector Tabs */}
                 <div className="flex gap-2 mb-4">
-                  {lessonQuestions.map((_, idx) => (
+                  {lessonQuestions.map((_, idx: number) => (
                     <button
                       key={idx}
                       onClick={() => setCurrentQIdx(idx)}
@@ -432,14 +455,14 @@ export default function TopicLesson() {
                   ))}
                 </div>
 
-                <p className="text-sm font-semibold text-[#214554]">{activeQ.question}</p>
+                <p className="text-sm font-semibold text-[#214554]">{activeQ?.question}</p>
                 <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                  {activeLesson.choices.map((choice) => (
+                  {activeQ?.choices.map((choice: string) => (
                     <button
                       key={choice}
-                      onClick={() => setAnswer(choice)}
-                      className={`rounded-xl border px-3 py-3 text-left text-sm font-semibold transition ${answer === choice
-                          ? choice === activeLesson.answer
+                      onClick={() => setAnswers((prev) => ({ ...prev, [currentQIdx]: choice }))}
+                      className={`rounded-xl border px-3 py-3 text-left text-sm font-semibold transition ${answers[currentQIdx] === choice
+                          ? choice === activeQ.answer
                             ? "border-[#67c9a0] bg-[#e5f8ef] text-[#318c60]"
                             : "border-[#efab87] bg-[#fff1e9] text-[#bd6d39]"
                           : "border-[#dfeef1] text-[#6e8c97] hover:border-[#8ad5e4]"
@@ -451,12 +474,12 @@ export default function TopicLesson() {
                 </div>
                 {answers[currentQIdx] && (
                   <p
-                    className={`mt-3 text-xs font-semibold ${answer === activeLesson.answer ? "text-[#318c60]" : "text-[#bd6d39]"
+                    className={`mt-3 text-xs font-semibold ${answers[currentQIdx] === activeQ?.answer ? "text-[#318c60]" : "text-[#bd6d39]"
                       }`}
                   >
-                    {answers[currentQIdx] === activeQ.answer
+                    {answers[currentQIdx] === activeQ?.answer
                       ? "Correct — great reasoning."
-                      : `Not quite. Correct answer: ${activeQ.answer}`}
+                      : `Not quite. Correct answer: ${activeQ?.answer}`}
                   </p>
                 )}
               </div>
@@ -471,8 +494,6 @@ export default function TopicLesson() {
                   ? `Lesson ${activeLessonIdx + 1} completed (+15 min logged)`
                   : `Mark Lesson ${activeLessonIdx + 1} complete`}
               </button>
-<<<<<<< Updated upstream
-=======
               {isLessonCompleted && nextTopic && (
                 <button
                   onClick={() => setLocation(`/dashboard/lessons/${encodeURIComponent(nextTopic.title)}`)}
@@ -481,7 +502,6 @@ export default function TopicLesson() {
                   Continue to next lesson: {nextTopic.title} <ArrowRight className="h-4 w-4" />
                 </button>
               )}
->>>>>>> Stashed changes
             </article>
 
             <aside className="space-y-5">
