@@ -223,7 +223,7 @@ function calcStreak(dates: Date[]) {
   const days = new Set(dates.map(dayKey));
   if (!days.size) return { current: 0, best: 0 };
 
-  const sorted = [...days].sort((a, b) => {
+  const sorted = Array.from(days).sort((a, b) => {
     const [ay, am, ad] = a.split("-").map(Number);
     const [by, bm, bd] = b.split("-").map(Number);
     return new Date(ay, am - 1, ad).getTime() - new Date(by, bm - 1, bd).getTime();

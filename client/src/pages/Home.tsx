@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useLearningPreferences } from "@/hooks/useLearningPreferences";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import {
@@ -95,9 +96,20 @@ export default function Home() {
   const [showFocus, setShowFocus] = useState(false);
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"courses" | "tasks">("courses");
+  const { selectedSubjects, setSelectedSubjects, isSubjectSelected, subjectSummary, hasBoth } = useLearningPreferences();
 
-  const courses = data?.courses?.length ? data.courses : initialCourses;
-  const tasks = data?.tasks?.length ? data.tasks : initialTasks;
+  const allCourses = data?.courses?.length ? data.courses : initialCourses;
+  const courses = useMemo(() => allCourses.filter(course => isSubjectSelected(course.subject)), [allCourses, isSubjectSelected]);
+  const allTasks = data?.tasks?.length ? data.tasks : initialTasks;
+  const tasks = useMemo(() => {
+    return allTasks.filter(task => {
+      const parentCourse = allCourses.find(c => c.title === task.course);
+      if (parentCourse) {
+        return isSubjectSelected(parentCourse.subject);
+      }
+      return true;
+    });
+  }, [allTasks, allCourses, isSubjectSelected]);
   const sessions = data?.sessions?.length ? data.sessions.map(session => session.minutes) : initialSessions;
   const stats = data?.stats;
   const displayName = user?.name || "there";
@@ -168,7 +180,19 @@ export default function Home() {
 
         <main className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
           <section className="mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-end">
-            <div><div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#e8f8fc] px-3 py-1.5 text-xs font-bold text-[#159ac1]"><Sparkles className="h-3.5 w-3.5" /> Your learning space</div><h1 className="text-[30px] font-bold tracking-[-0.04em] text-[#173c4b] sm:text-[36px]">{greetingForNow()}, {firstName} <span aria-hidden="true">✦</span></h1><p className="mt-2 max-w-xl text-[15px] leading-6 text-[#7897a2]">{hasStarted ? "Keep your momentum going. You’re building a learning habit this week." : "Your workspace is ready. Complete a lesson or start a focus session to begin tracking progress."}</p></div>
+            <div>
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <div className="inline-flex items-center gap-2 rounded-full bg-[#e8f8fc] px-3 py-1.5 text-xs font-bold text-[#159ac1]">
+                  <Sparkles className="h-3.5 w-3.5" /> Your learning space
+                </div>
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-[#f0edff] px-3 py-1.5 text-xs font-bold text-[#8979d5]">
+                  <span>Curriculum:</span>
+                  <span className="font-semibold">{subjectSummary}</span>
+                </div>
+              </div>
+              <h1 className="text-[30px] font-bold tracking-[-0.04em] text-[#173c4b] sm:text-[36px]">{greetingForNow()}, {firstName} <span aria-hidden="true">✦</span></h1>
+              <p className="mt-2 max-w-xl text-[15px] leading-6 text-[#7897a2]">{hasStarted ? "Keep your momentum going. You’re building a learning habit this week." : "Your workspace is ready. Complete a lesson or start a focus session to begin tracking progress."}</p>
+            </div>
             <div className="flex flex-wrap items-center gap-3">
               <button onClick={() => {
                 setProgressOverrides({});
@@ -201,11 +225,79 @@ export default function Home() {
             <div className="relative overflow-hidden rounded-2xl bg-[#dff5fb] p-6 sm:p-7"><div className="absolute -right-10 -top-12 h-40 w-40 rounded-full border-[22px] border-white/35" /><div className="absolute -bottom-16 -right-3 h-44 w-44 rounded-full bg-[#b9e9f2]/60" /><div className="relative"><div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#159ac1] shadow-sm"><Zap className="h-5 w-5 fill-current" /></div><p className="text-xs font-bold uppercase tracking-[.14em] text-[#58a8ba]">Keep going</p><h2 className="mt-2 max-w-[220px] text-2xl font-bold leading-tight tracking-[-.03em] text-[#1d596b]">{hasStarted ? "Small steps add up to big progress." : "Your first session starts the streak."}</h2><p className="mt-3 max-w-[260px] text-sm leading-6 text-[#5e8a97]">{totalMinutes >= weeklyGoal ? "You hit this week’s goal. Keep the habit going." : hasStarted ? `You’re only ${minutesToGoal} minutes away from your weekly goal.` : "Log a short focus session and your weekly goal, streak, and XP will start here."}</p><button onClick={() => setShowFocus(true)} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-[#159ac1] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">Learn for 25 min <ArrowRight className="h-3.5 w-3.5" /></button></div></div>
           </section>
 
-          <section id="courses" className="mt-9 scroll-mt-24"><div className="mb-5 flex flex-wrap items-end justify-between gap-4"><div><h2 className="text-xl font-bold tracking-tight text-[#214554]">Continue learning</h2><p className="mt-1 text-sm text-[#8aa7b1]">Pick up right where you left off</p></div><button onClick={() => toast("Course library", { description: "Your current Maths and Science topics are shown below." })} className="flex items-center gap-1 text-xs font-bold text-[#159ac1]">View all courses <ChevronRight className="h-3.5 w-3.5" /></button></div><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{filteredCourses.map(course => <CourseCard key={course.id} course={{ ...course, progress: progressOverrides[course.id] ?? course.progress }} onStart={() => setLocation(`/dashboard/lessons/${encodeURIComponent(course.title)}`)} />)}{!filteredCourses.length && <div className="col-span-full rounded-2xl border border-dashed border-[#cfe7ed] bg-white p-10 text-center text-sm text-[#8aa7b1]">No courses match “{query}”. Try another search.</div>}</div></section>
+          <section id="courses" className="mt-9 scroll-mt-24">
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-bold tracking-tight text-[#214554]">Continue learning</h2>
+                  <span className="rounded-full bg-[#e8f8fc] px-2.5 py-0.5 text-xs font-bold text-[#159ac1]">
+                    {subjectSummary}
+                  </span>
+                </div>
+                <p className="mt-1 text-sm text-[#8aa7b1]">
+                  Showing {courses.length} {courses.length === 1 ? "course" : "courses"} personalized for your subjects
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex rounded-xl bg-white p-1 border border-[#dfeef1] text-xs font-bold shadow-sm">
+                  <button
+                    onClick={() => setSelectedSubjects(["Mathematics"])}
+                    className={`px-3 py-1.5 rounded-lg transition ${
+                      selectedSubjects.length === 1 && selectedSubjects[0] === "Mathematics"
+                        ? "bg-[#159ac1] text-white"
+                        : "text-[#6e8c97] hover:text-[#159ac1]"
+                    }`}
+                  >
+                    Maths only
+                  </button>
+                  <button
+                    onClick={() => setSelectedSubjects(["Science"])}
+                    className={`px-3 py-1.5 rounded-lg transition ${
+                      selectedSubjects.length === 1 && selectedSubjects[0] === "Science"
+                        ? "bg-[#159ac1] text-white"
+                        : "text-[#6e8c97] hover:text-[#159ac1]"
+                    }`}
+                  >
+                    Science only
+                  </button>
+                  <button
+                    onClick={() => setSelectedSubjects(["Mathematics", "Science"])}
+                    className={`px-3 py-1.5 rounded-lg transition ${
+                      hasBoth
+                        ? "bg-[#159ac1] text-white"
+                        : "text-[#6e8c97] hover:text-[#159ac1]"
+                    }`}
+                  >
+                    Both
+                  </button>
+                </div>
+                <button
+                  onClick={() => setLocation("/onboarding")}
+                  className="flex items-center gap-1 rounded-xl border border-[#dfeef1] bg-white px-3 py-1.5 text-xs font-bold text-[#159ac1] transition hover:bg-[#f0fafc]"
+                >
+                  Adjust in Onboarding <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {filteredCourses.map(course => (
+                <CourseCard
+                  key={course.id}
+                  course={{ ...course, progress: progressOverrides[course.id] ?? course.progress }}
+                  onStart={() => setLocation(`/dashboard/lessons/${encodeURIComponent(course.title)}`)}
+                />
+              ))}
+              {!filteredCourses.length && (
+                <div className="col-span-full rounded-2xl border border-dashed border-[#cfe7ed] bg-white p-10 text-center text-sm text-[#8aa7b1]">
+                  No courses match “{query}” in your active {subjectSummary} curriculum.
+                </div>
+              )}
+            </div>
+          </section>
 
           <section className="mt-9 grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,.8fr)]">
             <div id="tasks" className="scroll-mt-24 rounded-2xl border border-[#dff0f4] bg-white shadow-[0_10px_35px_rgba(27,91,109,0.04)]"><div className="flex items-center justify-between border-b border-[#edf4f6] px-5 py-5 sm:px-7"><div><h2 className="text-lg font-bold tracking-tight text-[#214554]">Your tasks</h2><p className="mt-1 text-xs text-[#8aa7b1]">{completedTasks} of {tasks.length} completed</p></div><button onClick={() => toast("New task", { description: "Task creation will be available from the full planner." })} className="grid h-9 w-9 place-items-center rounded-lg bg-[#e8f8fc] text-[#159ac1] transition hover:bg-[#d7f2f7]" aria-label="Add a task"><Plus className="h-4 w-4" /></button></div><div className="flex gap-5 px-5 pt-4 sm:px-7"><button onClick={() => setActiveTab("courses")} className={`border-b-2 pb-3 text-xs font-bold ${activeTab === "courses" ? "border-[#159ac1] text-[#159ac1]" : "border-transparent text-[#9bb2ba]"}`}>Due soon</button><button onClick={() => setActiveTab("tasks")} className={`border-b-2 pb-3 text-xs font-bold ${activeTab === "tasks" ? "border-[#159ac1] text-[#159ac1]" : "border-transparent text-[#9bb2ba]"}`}>All tasks</button></div><div className="divide-y divide-[#edf4f6] px-5 pb-2 sm:px-7">{tasks.filter(task => activeTab === "tasks" || !(taskOverrides[task.id] ?? task.status === "completed")).map(task => { const isDone = taskOverrides[task.id] ?? task.status === "completed"; return <div key={task.id} className={`flex items-center gap-3 py-4 transition ${isDone ? "opacity-55" : ""}`}><button onClick={() => handleTaskToggle(task.id, !isDone)} aria-label={isDone ? `Mark ${task.title} as incomplete` : `Complete ${task.title}`} className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border transition ${isDone ? "border-[#159ac1] bg-[#159ac1] text-white" : "border-[#bed5dc] bg-white text-transparent hover:border-[#159ac1]"}`}><Check className="h-3.5 w-3.5" /></button><div className="min-w-0 flex-1"><p className={`truncate text-sm font-semibold ${isDone ? "text-[#91aab2] line-through" : "text-[#214554]"}`}>{task.title}</p><p className="mt-1 flex items-center gap-1.5 text-xs text-[#9bb2ba]"><BookOpen className="h-3 w-3" />{task.course}</p></div><div className="hidden text-right sm:block"><p className={`text-xs font-bold ${task.dueLabel === "Today" ? "text-[#ef946e]" : "text-[#8aa7b1]"}`}>{task.dueLabel}</p><span className={`text-[10px] font-semibold ${task.priority === "High" ? "text-[#ef946e]" : "text-[#9bb2ba]"}`}>{task.priority} priority</span></div><button onClick={() => toast(task.title, { description: `${task.course} · due ${task.dueLabel}` })} className="grid h-8 w-8 place-items-center rounded-lg text-[#a6bbc2] transition hover:bg-[#f2f8f9] hover:text-[#159ac1]" aria-label={`More details for ${task.title}`}><MoreHorizontal className="h-4 w-4" /></button></div> })}</div></div>
-            <div id="insights" className="scroll-mt-24 rounded-2xl border border-[#dff0f4] bg-white p-5 shadow-[0_10px_35px_rgba(27,91,109,0.04)] sm:p-7"><div className="flex items-start justify-between"><div><h2 className="text-lg font-bold tracking-tight text-[#214554]">Recent activity</h2><p className="mt-1 text-xs text-[#8aa7b1]">{recentActivity.length ? "Your latest curriculum wins" : "Nothing logged yet"}</p></div><TrendingUp className="h-5 w-5 text-[#6bd6ae]" /></div><div className="mt-5 space-y-5">{recentActivity.length ? recentActivity.map(item => <ActivityItem key={item.id} icon={item.color === "green" ? <CheckCircle2 className="h-4 w-4" /> : item.color === "yellow" ? <Trophy className="h-4 w-4" /> : <BookOpen className="h-4 w-4" />} title={item.title} subtitle={item.subtitle} time={item.time} color={item.color} />) : <p className="rounded-xl bg-[#f3fafb] px-4 py-6 text-center text-sm text-[#8aa7b1]">Complete a lesson or log a focus session to see activity here.</p>}</div><button onClick={() => toast("Activity history", { description: recentActivity.length ? `${recentActivity.length} recent updates from your learning.` : "No activity yet for this account." })} className="mt-6 flex w-full items-center justify-center gap-1 rounded-xl bg-[#f3fafb] py-3 text-xs font-bold text-[#159ac1] transition hover:bg-[#e7f6f9]">View full history <ArrowRight className="h-3.5 w-3.5" /></button></div>
+            <div id="insights" className="scroll-mt-24 rounded-2xl border border-[#dff0f4] bg-white p-5 shadow-[0_10px_35px_rgba(27,91,109,0.04)] sm:p-7"><div className="flex items-start justify-between"><div><h2 className="text-lg font-bold tracking-tight text-[#214554]">Recent activity</h2><p className="mt-1 text-xs text-[#8aa7b1]">{recentActivity.length ? "Your latest curriculum wins" : "Nothing logged yet"}</p></div><TrendingUp className="h-5 w-5 text-[#6bd6ae]" /></div><div className="mt-5 space-y-5">{recentActivity.length ? recentActivity.map(item => <ActivityItem key={item.id} icon={item.color === "green" ? <CheckCircle2 className="h-4 w-4" /> : (item.color as string) === "yellow" ? <Trophy className="h-4 w-4" /> : <BookOpen className="h-4 w-4" />} title={item.title} subtitle={item.subtitle} time={item.time} color={item.color} />) : <p className="rounded-xl bg-[#f3fafb] px-4 py-6 text-center text-sm text-[#8aa7b1]">Complete a lesson or log a focus session to see activity here.</p>}</div><button onClick={() => toast("Activity history", { description: recentActivity.length ? `${recentActivity.length} recent updates from your learning.` : "No activity yet for this account." })} className="mt-6 flex w-full items-center justify-center gap-1 rounded-xl bg-[#f3fafb] py-3 text-xs font-bold text-[#159ac1] transition hover:bg-[#e7f6f9]">View full history <ArrowRight className="h-3.5 w-3.5" /></button></div>
           </section>
 
           <footer className="mt-10 flex flex-col justify-between gap-2 border-t border-[#e5f0f3] py-6 text-xs text-[#9bb2ba] sm:flex-row"><span>neura · learn with intention</span><span className="flex items-center gap-1">Built for curious minds <Sparkles className="h-3 w-3 text-[#159ac1]" /></span></footer>
