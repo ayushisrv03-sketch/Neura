@@ -28,12 +28,11 @@ const stepTitles = ['Getting to know you', 'Exploration', 'Preferences', 'Pace &
 export default function OnboardingPage() {
   const [, setLocation] = useLocation()
   const { user } = useAuth()
-  const { selectedSubjects, setSelectedSubjects, subjectSummary } = useLearningPreferences()
+  const { selectedSubjects, setSelectedSubjects, subjectSummary, selectedFormats, setSelectedFormats } = useLearningPreferences()
   const [step, setStep] = useState(1)
   const [name, setName] = useState('')
   const [calmMode, setCalmMode] = useState(false)
   const [dyslexiaFont, setDyslexiaFont] = useState(false)
-  const [selectedFormats, setSelectedFormats] = useState(['Text', 'Visual', 'Examples', 'Step-by-step'])
   const [pace, setPace] = useState('Normal (~20–30 min)')
   const [subjectNotice, setSubjectNotice] = useState<string | null>(null)
 
@@ -61,12 +60,16 @@ export default function OnboardingPage() {
     }
   }
 
-  const toggleValue = (value: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
-    setter((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])
+  const toggleFormat = (value: string) => {
+    const updated = selectedFormats.includes(value)
+      ? selectedFormats.filter((item) => item !== value)
+      : [...selectedFormats, value];
+    setSelectedFormats(updated);
   }
 
   const handleFinish = () => {
     setSelectedSubjects(selectedSubjects)
+    setSelectedFormats(selectedFormats)
     setLocation('/dashboard')
   }
 
@@ -142,7 +145,7 @@ export default function OnboardingPage() {
             </StepShell>
           )}
 
-          {step === 3 && <StepShell eyebrow="Step 3 • Preferences" title="How do you like to learn?" description="Select all formats that feel natural and comfortable for your mind."><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{formats.map((item) => { const selected = selectedFormats.includes(item.name); return <button key={item.name} type="button" onClick={() => toggleValue(item.name, setSelectedFormats)} className={`flex min-h-36 flex-col justify-between gap-3 rounded-xl p-4 text-left transition hover:shadow-sm ${selected ? 'border-2 border-sky-600 bg-sky-50/60' : 'border border-[#c0c7d1]/40 bg-white hover:bg-[#f2f3ff]'}`}><span className="flex items-center justify-between"><span className={`flex h-9 w-9 items-center justify-center rounded-lg text-lg ${selected ? 'bg-sky-600 text-white' : 'bg-[#eaedff] text-[#40474f]'}`}>{item.icon}</span><span className={selected ? 'text-sky-600' : 'text-[#c0c7d1]'}>{selected ? '✓' : '○'}</span></span><span><strong className="mb-1 block text-sm">{item.name}</strong><small className="text-xs leading-relaxed text-[#40474f]">{item.detail}</small></span></button> })}</div><Footer onBack={() => setStep(2)} onNext={() => setStep(4)} /></StepShell>}
+          {step === 3 && <StepShell eyebrow="Step 3 • Preferences" title="How do you like to learn?" description="Select all formats that feel natural and comfortable for your mind."><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{formats.map((item) => { const selected = selectedFormats.includes(item.name); return <button key={item.name} type="button" onClick={() => toggleFormat(item.name)} className={`flex min-h-36 flex-col justify-between gap-3 rounded-xl p-4 text-left transition hover:shadow-sm ${selected ? 'border-2 border-sky-600 bg-sky-50/60' : 'border border-[#c0c7d1]/40 bg-white hover:bg-[#f2f3ff]'}`}><span className="flex items-center justify-between"><span className={`flex h-9 w-9 items-center justify-center rounded-lg text-lg ${selected ? 'bg-sky-600 text-white' : 'bg-[#eaedff] text-[#40474f]'}`}>{item.icon}</span><span className={selected ? 'text-sky-600' : 'text-[#c0c7d1]'}>{selected ? '✓' : '○'}</span></span><span><strong className="mb-1 block text-sm">{item.name}</strong><small className="text-xs leading-relaxed text-[#40474f]">{item.detail}</small></span></button> })}</div><Footer onBack={() => setStep(2)} onNext={() => setStep(4)} /></StepShell>}
 
           {step === 4 && <StepShell eyebrow="Step 4 • Pace & Rhythm" title="How long would you like to study at a time?" description="No timers or speed pressure. Just your preferred rhythm."><div className="flex flex-col gap-3.5">{paces.map((item) => { const selected = pace === item.name; return <button key={item.name} type="button" onClick={() => setPace(item.name)} className={`flex items-start justify-between gap-4 rounded-xl p-4 text-left transition hover:shadow-sm ${selected ? 'border-2 border-sky-600 bg-sky-50/60' : 'border border-[#c0c7d1]/40 bg-white hover:bg-[#f2f3ff]'}`}><span className="flex items-start gap-3.5"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl ${selected ? 'bg-sky-600 text-white' : 'bg-[#eaedff] text-[#40474f]'}`}>{item.icon}</span><span><strong className="flex flex-wrap items-center gap-2 text-base">{item.name}{item.recommended && <em className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] not-italic text-sky-700">Recommended</em>}</strong><small className="mt-0.5 block text-sm text-[#40474f]">{item.detail}</small></span></span><span className={selected ? 'text-xl text-sky-600' : 'text-xl text-[#c0c7d1]'}>{selected ? '✓' : '○'}</span></button> })}</div><Footer onBack={() => setStep(3)} nextLabel="Review Profile" onNext={() => setStep(5)} /></StepShell>}
 

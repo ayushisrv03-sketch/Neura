@@ -1,5 +1,6 @@
 import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
+import { clearTopicCompletedLessons } from "@/lib/topicCurriculum";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo } from "react";
 
@@ -44,7 +45,9 @@ export function useAuth(options?: UseAuthOptions) {
       // backend cookie is cleared by the logout mutation.
       try {
         sessionStorage.removeItem("manus-cookie");
+        localStorage.removeItem("manus-runtime-user-info");
       } catch {}
+      clearTopicCompletedLessons();
       utils.auth.me.setData(undefined, null);
       await utils.auth.me.invalidate();
     }
