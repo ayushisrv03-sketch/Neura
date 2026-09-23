@@ -337,12 +337,31 @@ export function isLessonUnlocked(lessonIndex: number, completedIndices: number[]
   return completedIndices.includes(lessonIndex - 1);
 }
 
-const STORAGE_PREFIX = "neura-topic-completed-v2-";
-
-export function getTopicCompletedLessons(topic: string): number[] {
-  if (typeof window === "undefined") return [];
+export function getCurrentUserKey(explicitUserId?: string | number | null): string {
+  if (explicitUserId) {
+    const s = String(explicitUserId);
+    return s.startsWith("user_") ? s : `user_${s}`;
+  }
+  if (typeof window === "undefined") return "guest";
   try {
-    const saved = localStorage.getItem(`${STORAGE_PREFIX}${topic}`);
+    const raw = localStorage.getItem("manus-runtime-user-info");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && (parsed.id || parsed.openId || parsed.email)) {
+        return `user_${parsed.id || parsed.openId || parsed.email}`;
+      }
+    }
+  } catch {}
+  return "guest";
+}
+
+const STORAGE_PREFIX = "neura-topic-completed-v3-";
+
+export function getTopicCompletedLessons(topic: string, userId?: string | number | null): number[] {
+  if (typeof window === "undefined" || !topic) return [];
+  const userKey = getCurrentUserKey(userId);
+  try {
+    const saved = localStorage.getItem(`${STORAGE_PREFIX}${userKey}-${topic}`);
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) return parsed.map((n) => Number(n));
@@ -353,25 +372,61 @@ export function getTopicCompletedLessons(topic: string): number[] {
   return [];
 }
 
-export function setTopicLessonCompleted(topic: string, lessonIndex: number): number[] {
-  const current = getTopicCompletedLessons(topic);
+export function setTopicLessonCompleted(
+  topic: string,
+  lessonIndex: number,
+  userId?: string | number | null
+): number[] {
+  if (!topic) return [];
+  const userKey = getCurrentUserKey(userId);
+  const current = getTopicCompletedLessons(topic, userId);
   if (!current.includes(lessonIndex)) {
     const updated = [...current, lessonIndex].sort((a, b) => a - b);
     try {
-      localStorage.setItem(`${STORAGE_PREFIX}${topic}`, JSON.stringify(updated));
+      localStorage.setItem(`${STORAGE_PREFIX}${userKey}-${topic}`, JSON.stringify(updated));
     } catch (err) {
       console.warn("Failed to save completed lesson to localStorage", err);
     }
     if (typeof window !== "undefined") {
       window.dispatchEvent(
         new CustomEvent("neura-lesson-completed", {
-          detail: { topic, lessonIndex, completed: updated },
+          detail: { topic, lessonIndex, completed: updated, userKey },
         })
       );
     }
     return updated;
   }
   return current;
+}
+
+export function clearTopicCompletedLessons(userId?: string | number | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (
+        key &&
+        (key.startsWith("neura-topic-completed-") ||
+          key.startsWith("neura-topic-completed-v2-") ||
+          key.startsWith("neura-topic-completed-v3-"))
+      ) {
+        if (!userId || key.includes(String(userId))) {
+          keysToRemove.push(key);
+        }
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+  } catch (err) {
+    console.warn("Failed to clear completed lessons", err);
+  }
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("neura-lesson-completed", {
+        detail: { topic: "", lessonIndex: -1, completed: [] },
+      })
+    );
+  }
 }
 
 export const lessons = Object.fromEntries(

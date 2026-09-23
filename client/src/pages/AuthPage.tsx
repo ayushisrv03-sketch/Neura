@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
+import { clearTopicCompletedLessons } from "@/lib/topicCurriculum";
 
 type Tab = "login" | "signup";
 
@@ -109,6 +110,8 @@ export default function AuthPage({ defaultTab }: { defaultTab: Tab }) {
         setError(data.error || "Something went wrong creating your account.");
         return;
       }
+      // Ensure new user starts with 0 lesson ticks
+      clearTopicCompletedLessons();
       setLocation("/onboarding");
     } catch {
       setError("Couldn't reach the server. Please try again.");

@@ -1,5 +1,6 @@
 import { SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import { getTopicCompletedLessons, getTopicCurriculum, isLessonUnlocked } from "@/lib/topicCurriculum";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { ArrowLeft, CheckCircle2, Lock, PanelLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
@@ -10,6 +11,8 @@ interface TopicSidebarProps {
 
 export function TopicSidebar({ topicName }: TopicSidebarProps) {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
+  const userId = user?.id || user?.openId || user?.email;
   const { state, setOpenMobile, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
 
@@ -17,7 +20,7 @@ export function TopicSidebar({ topicName }: TopicSidebarProps) {
   const totalLessons = curriculum.lessons.length;
 
   const [completedIndices, setCompletedIndices] = useState<number[]>(() =>
-    getTopicCompletedLessons(topicName)
+    getTopicCompletedLessons(topicName, userId)
   );
 
   // Read current active lesson from URL search query (e.g., ?lesson=1 => index 0)
@@ -51,9 +54,11 @@ export function TopicSidebar({ topicName }: TopicSidebarProps) {
     };
 
     const handleLessonCompleted = (e: Event) => {
-      const customEvent = e as CustomEvent<{ topic: string; completed: number[] }>;
-      if (customEvent.detail && customEvent.detail.topic === topicName) {
-        setCompletedIndices(customEvent.detail.completed);
+      const customEvent = e as CustomEvent<{ topic: string; completed: number[]; userKey?: string }>;
+      if (customEvent.detail) {
+        if (!customEvent.detail.topic || customEvent.detail.topic === topicName) {
+          setCompletedIndices(customEvent.detail.completed || []);
+        }
       }
     };
 
@@ -66,10 +71,10 @@ export function TopicSidebar({ topicName }: TopicSidebarProps) {
     };
   }, [topicName, totalLessons]);
 
-  // Keep state synced when topic changes
+  // Keep state synced when topic or user changes
   useEffect(() => {
-    setCompletedIndices(getTopicCompletedLessons(topicName));
-  }, [topicName]);
+    setCompletedIndices(getTopicCompletedLessons(topicName, userId));
+  }, [topicName, userId]);
 
   const selectLesson = (index: number) => {
     if (!isLessonUnlocked(index, completedIndices)) return;

@@ -6,25 +6,45 @@ import {
   lessons,
   setTopicLessonCompleted,
 } from "@/lib/topicCurriculum";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { useLearningPreferences } from "@/hooks/useLearningPreferences";
 import { trpc } from "@/lib/trpc";
 import {
   ArrowLeft,
   ArrowRight,
   BookOpen,
+  Bot,
   CheckCircle2,
   Clock3,
   Eye,
   GraduationCap,
   HelpCircle,
+  Layers,
   Leaf,
   Lightbulb,
+  Loader2,
+  Pause,
   Play,
   RotateCcw,
+  Send,
   Sparkles,
+  User,
+  Volume2,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useRoute } from "wouter";
+import { Streamdown } from "streamdown";
+
+type TutorMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+const INITIAL_TUTOR_MESSAGE: TutorMessage = {
+  role: "assistant",
+  content:
+    "Hey! I'm your Neura AI Tutor. Ask me anything about this lesson, and I'll help you understand it step by step.",
+};
 
 export default function TopicLesson() {
   const [, params] = useRoute("/dashboard/lessons/:topic");
@@ -32,14 +52,27 @@ export default function TopicLesson() {
   const topic = decodeURIComponent(params?.topic ?? "");
   const curriculum = useMemo(() => getTopicCurriculum(topic), [topic]);
 
-  const { selectedSubjects, setSelectedSubjects, isSubjectSelected, subjectSummary } = useLearningPreferences();
+  const { user } = useAuth();
+  const userId = user?.id || user?.openId || user?.email;
+
+  const { selectedSubjects, setSelectedSubjects, isSubjectSelected, subjectSummary, selectedFormats } = useLearningPreferences();
+
+  // Learning methods visibility:
+  // 1. Show visually is kept for EVERY user regardless of onboarding selection
+  const showVisual = true;
+  // 2. Other methods are shown ONLY if selected during onboarding
+  const showSteps = selectedFormats.some((f) => f.toLowerCase() === "step-by-step" || f.toLowerCase() === "step by step");
+  const showExamples = selectedFormats.some((f) => f.toLowerCase() === "examples" || f.toLowerCase() === "example");
+  const showSimple = selectedFormats.some((f) => f.toLowerCase() === "text");
+  const showAudio = selectedFormats.some((f) => f.toLowerCase() === "audio");
+  const showInteractive = selectedFormats.some((f) => f.toLowerCase() === "interactive");
 
   const { data } = trpc.dashboard.overview.useQuery();
   const utils = trpc.useUtils();
   const logStudy = trpc.dashboard.logStudy.useMutation();
 
   const [completedIndices, setCompletedIndices] = useState<number[]>(() =>
-    getTopicCompletedLessons(topic)
+    getTopicCompletedLessons(topic, userId)
   );
 
   const [activeLessonIdx, setActiveLessonIdx] = useState<number>(() => {
@@ -54,11 +87,63 @@ export default function TopicLesson() {
     return 0;
   });
 
-  const [activeMode, setActiveMode] = useState<"steps" | "visual" | "example" | "simple" | "hint" | "stuck">(
-    "visual"
-  );
+  const [activeMode, setActiveMode] = useState<
+    "steps" | "visual" | "example" | "simple" | "audio" | "hint" | "stuck" | "tutor"
+  >("visual");
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [currentQIdx, setCurrentQIdx] = useState<number>(0);
+  const [tutorMessages, setTutorMessages] = useState<TutorMessage[]>([INITIAL_TUTOR_MESSAGE]);
+  const [tutorInput, setTutorInput] = useState("");
+  const [tutorError, setTutorError] = useState<string | null>(null);
+  const tutorScrollRef = useRef<HTMLDivElement>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  const activeLesson = curriculum?.lessons?.[activeLessonIdx] || curriculum?.lessons?.[0];
+
+  const toggleAudioPlay = () => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      return;
+    }
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    if (!activeLesson) return;
+    const textToSpeak = `${activeLesson.title}. ${activeLesson.intro}. ${activeLesson.explanation}. Worked example: ${activeLesson.example}`;
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    utterance.rate = 0.9;
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    setIsSpeaking(true);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [activeLessonIdx, topic]);
+
+  useEffect(() => {
+    if (activeMode === "steps" && !showSteps) setActiveMode("visual");
+    if (activeMode === "example" && !showExamples) setActiveMode("visual");
+    if (activeMode === "simple" && !showSimple) setActiveMode("visual");
+    if (activeMode === "audio" && !showAudio) setActiveMode("visual");
+  }, [activeMode, showSteps, showExamples, showSimple, showAudio]);
+
+  const tutorMutation = trpc.ai.tutorChat.useMutation({
+    onSuccess: (res) => {
+      setTutorMessages((prev) => [...prev, { role: "assistant", content: res.reply }]);
+      setTutorError(null);
+    },
+    onError: (err) => {
+      setTutorError(err.message || "Sorry, I couldn't connect to your AI Tutor right now. Try again in a moment.");
+    },
+  });
 
   useEffect(() => {
     const handleSync = () => {
@@ -72,27 +157,47 @@ export default function TopicLesson() {
       } else {
         setActiveLessonIdx(0);
       }
-      setCompletedIndices(getTopicCompletedLessons(topic));
+      setCompletedIndices(getTopicCompletedLessons(topic, userId));
       setAnswers({});
       setCurrentQIdx(0);
+      setTutorMessages([INITIAL_TUTOR_MESSAGE]);
+      setTutorError(null);
+      setTutorInput("");
+    };
+
+    const handleLessonSync = (e: Event) => {
+      const customEvent = e as CustomEvent<{ topic: string; completed: number[]; userKey?: string }>;
+      if (customEvent.detail) {
+        if (!customEvent.detail.topic || customEvent.detail.topic === topic) {
+          setCompletedIndices(customEvent.detail.completed || []);
+        }
+      }
     };
 
     window.addEventListener("popstate", handleSync);
-    window.addEventListener("neura-lesson-completed", handleSync);
+    window.addEventListener("neura-lesson-completed", handleLessonSync);
 
     return () => {
       window.removeEventListener("popstate", handleSync);
-      window.removeEventListener("neura-lesson-completed", handleSync);
+      window.removeEventListener("neura-lesson-completed", handleLessonSync);
     };
-  }, [topic, curriculum?.lessons?.length]);
+  }, [topic, curriculum?.lessons?.length, userId]);
 
   useEffect(() => {
-    setCompletedIndices(getTopicCompletedLessons(topic));
+    setCompletedIndices(getTopicCompletedLessons(topic, userId));
     setAnswers({});
     setCurrentQIdx(0);
-  }, [topic, activeLessonIdx]);
+    setTutorMessages([INITIAL_TUTOR_MESSAGE]);
+    setTutorError(null);
+    setTutorInput("");
+  }, [topic, activeLessonIdx, userId]);
 
-  const activeLesson = curriculum?.lessons?.[activeLessonIdx] || curriculum?.lessons?.[0];
+  useEffect(() => {
+    if (activeMode === "tutor") {
+      tutorScrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [tutorMessages, tutorMutation.isPending, tutorError, activeMode]);
+
   const isLessonCompleted = completedIndices.includes(activeLessonIdx);
   const isLastLesson = curriculum ? activeLessonIdx >= curriculum.lessons.length - 1 : true;
 
@@ -195,7 +300,7 @@ export default function TopicLesson() {
   const lessonsTotal = course?.lessonsTotal ?? 1;
   const completeLesson = () => {
     if (isLessonCompleted) return;
-    const updated = setTopicLessonCompleted(topic, activeLessonIdx);
+    const updated = setTopicLessonCompleted(topic, activeLessonIdx, userId);
     setCompletedIndices(updated);
 
     if (course) {
@@ -217,6 +322,43 @@ export default function TopicLesson() {
     } else {
       setLocation("/dashboard");
     }
+  };
+
+  const handleSendTutorMessage = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = tutorInput.trim();
+    if (!trimmed || tutorMutation.isPending) return;
+
+    const newMessages: TutorMessage[] = [...tutorMessages, { role: "user", content: trimmed }];
+    setTutorMessages(newMessages);
+    setTutorInput("");
+    setTutorError(null);
+
+    const lessonContent = [
+      `Introduction: ${activeLesson.intro}`,
+      `Explanation: ${activeLesson.explanation}`,
+      `Example: ${activeLesson.example}`,
+      activeLesson.activity ? `Activity: ${activeLesson.activity}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    tutorMutation.mutate({
+      topic,
+      lessonTitle: activeLesson.title,
+      lessonContent,
+      currentMode: activeMode,
+      currentQuestion: activeQ
+        ? {
+            question: activeQ.question,
+            options: activeQ.choices,
+          }
+        : undefined,
+      conversation: tutorMessages
+        .filter((m) => m !== INITIAL_TUTOR_MESSAGE)
+        .map((m) => ({ role: m.role, content: m.content })),
+      message: trimmed,
+    });
   };
 
   const modeContent =
@@ -244,6 +386,34 @@ export default function TopicLesson() {
       </div>
     ) : activeMode === "simple" ? (
       <p className="text-sm text-[#5e7d87]">{activeLesson.explanation.split(".")[0]}.</p>
+    ) : activeMode === "audio" ? (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-[#315866]">
+            Audio Narration &amp; Calm Read-Aloud
+          </p>
+          <button
+            type="button"
+            onClick={toggleAudioPlay}
+            className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold text-white transition ${
+              isSpeaking ? "bg-amber-500 hover:bg-amber-600" : "bg-[#159ac1] hover:bg-[#0e7795]"
+            }`}
+          >
+            {isSpeaking ? (
+              <>
+                <Pause className="h-3.5 w-3.5" /> Pause narration
+              </>
+            ) : (
+              <>
+                <Volume2 className="h-3.5 w-3.5" /> Listen to lesson
+              </>
+            )}
+          </button>
+        </div>
+        <p className="text-sm text-[#5e7d87] leading-relaxed italic bg-white p-3.5 rounded-xl border border-[#e1f0f4]">
+          "{activeLesson.intro} {activeLesson.explanation}"
+        </p>
+      </div>
     ) : activeMode === "hint" ? (
       <p className="text-sm text-[#5e7d87]">
         <strong>Hint:</strong> Look at the key relationship in the worked example, then apply the same idea to the
@@ -257,6 +427,106 @@ export default function TopicLesson() {
           <li>Interact with the visual model above.</li>
           <li>Try the easiest part of the question first.</li>
         </ul>
+      </div>
+    ) : activeMode === "tutor" ? (
+      <div id="ai-tutor-container" className="space-y-4">
+        <div className="border-b border-[#dff0f4] pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#e8f8fc] text-[#159ac1]">
+              <Bot className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="text-base font-bold text-[#173c4b]">Neura AI Tutor</h4>
+              <p className="text-xs text-[#7897a2]">Ask me anything about this lesson.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-h-[360px] min-h-[160px] overflow-y-auto space-y-3 pr-1">
+          {tutorMessages.map((msg, idx) => (
+            <div
+              key={idx}
+              className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            >
+              {msg.role === "assistant" && (
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#e8f8fc] text-[#159ac1] mt-0.5">
+                  <Bot className="h-4 w-4" />
+                </div>
+              )}
+              <div
+                className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                  msg.role === "user"
+                    ? "bg-[#159ac1] text-white rounded-tr-sm"
+                    : "bg-white text-[#214554] border border-[#dff0f4] shadow-[0_2px_10px_rgba(27,91,109,0.03)] rounded-tl-sm"
+                }`}
+              >
+                {msg.role === "assistant" ? (
+                  <div className="prose prose-sm max-w-none text-[#214554] [&>p]:mb-2 [&>p:last-child]:mb-0 [&>ul]:list-disc [&>ul]:pl-4 [&>ol]:list-decimal [&>ol]:pl-4 [&>code]:bg-[#edf5f7] [&>code]:px-1.5 [&>code]:py-0.5 [&>code]:rounded">
+                    <Streamdown>{msg.content}</Streamdown>
+                  </div>
+                ) : (
+                  <p className="whitespace-pre-wrap">{msg.content}</p>
+                )}
+              </div>
+              {msg.role === "user" && (
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#edf5f7] text-[#6e8c97] mt-0.5">
+                  <User className="h-4 w-4" />
+                </div>
+              )}
+            </div>
+          ))}
+
+          {tutorMutation.isPending && (
+            <div className="flex items-start gap-2.5">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#e8f8fc] text-[#159ac1] mt-0.5">
+                <Bot className="h-4 w-4" />
+              </div>
+              <div className="rounded-2xl rounded-tl-sm border border-[#dff0f4] bg-white px-4 py-2.5 text-sm shadow-[0_2px_10px_rgba(27,91,109,0.03)]">
+                <div className="flex items-center gap-2 text-xs font-semibold text-[#159ac1]">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Thinking...</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {tutorError && (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-700">
+              {tutorError}
+            </div>
+          )}
+
+          <div ref={tutorScrollRef} />
+        </div>
+
+        <form onSubmit={handleSendTutorMessage} className="flex items-center gap-2 pt-2">
+          <input
+            type="text"
+            value={tutorInput}
+            onChange={(e) => setTutorInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSendTutorMessage();
+              }
+            }}
+            placeholder="Ask me anything about this lesson..."
+            disabled={tutorMutation.isPending}
+            className="flex-1 rounded-xl border border-[#dfeef1] bg-white px-4 py-2.5 text-sm text-[#214554] placeholder-[#8aa7b1] focus:border-[#159ac1] focus:outline-none focus:ring-1 focus:ring-[#159ac1] disabled:opacity-50"
+          />
+          <button
+            type="submit"
+            disabled={!tutorInput.trim() || tutorMutation.isPending}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#159ac1] text-white transition hover:bg-[#1088aa] disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label="Send message"
+          >
+            {tutorMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </button>
+        </form>
       </div>
     ) : null;
 
@@ -315,7 +585,7 @@ export default function TopicLesson() {
               <p className="mt-3 text-sm leading-7 text-[#66828c]">{activeLesson.explanation}</p>
 
               {/* Featured Interactive Visual Sandbox */}
-              <div className="mt-7">
+              <div id="interactive-visual-sandbox" className="mt-7">
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-sm font-bold text-[#315866] flex items-center gap-2">
                     <Eye className="h-4 w-4 text-[#159ac1]" />
@@ -332,6 +602,7 @@ export default function TopicLesson() {
               <div className="mt-8">
                 <p className="mb-3 text-sm font-bold text-[#315866]">Choose how you would like to learn</p>
                 <div className="flex flex-wrap gap-2">
+                  {/* Visual is kept for every user */}
                   <button
                     onClick={() => setActiveMode("visual")}
                     className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "visual"
@@ -341,33 +612,76 @@ export default function TopicLesson() {
                   >
                     <Eye className="mr-1 inline h-3.5 w-3.5" /> Show visually
                   </button>
-                  <button
-                    onClick={() => setActiveMode("steps")}
-                    className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "steps"
-                      ? "bg-[#159ac1] text-white"
-                      : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
-                      }`}
-                  >
-                    <Sparkles className="mr-1 inline h-3.5 w-3.5" /> Step by step
-                  </button>
-                  <button
-                    onClick={() => setActiveMode("example")}
-                    className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "example"
-                      ? "bg-[#159ac1] text-white"
-                      : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
-                      }`}
-                  >
-                    <Lightbulb className="mr-1 inline h-3.5 w-3.5" /> Show an example
-                  </button>
-                  <button
-                    onClick={() => setActiveMode("simple")}
-                    className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "simple"
-                      ? "bg-[#159ac1] text-white"
-                      : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
-                      }`}
-                  >
-                    <BookOpenIcon /> Explain simply
-                  </button>
+
+                  {/* Step by step - only if selected in onboarding */}
+                  {showSteps && (
+                    <button
+                      onClick={() => setActiveMode("steps")}
+                      className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "steps"
+                        ? "bg-[#159ac1] text-white"
+                        : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
+                        }`}
+                    >
+                      <Sparkles className="mr-1 inline h-3.5 w-3.5" /> Step by step
+                    </button>
+                  )}
+
+                  {/* Show an example - only if selected in onboarding */}
+                  {showExamples && (
+                    <button
+                      onClick={() => setActiveMode("example")}
+                      className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "example"
+                        ? "bg-[#159ac1] text-white"
+                        : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
+                        }`}
+                    >
+                      <Lightbulb className="mr-1 inline h-3.5 w-3.5" /> Show an example
+                    </button>
+                  )}
+
+                  {/* Explain simply - only if selected in onboarding */}
+                  {showSimple && (
+                    <button
+                      onClick={() => setActiveMode("simple")}
+                      className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "simple"
+                        ? "bg-[#159ac1] text-white"
+                        : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
+                        }`}
+                    >
+                      <BookOpenIcon /> Explain simply
+                    </button>
+                  )}
+
+                  {/* Audio narration - only if selected in onboarding */}
+                  {showAudio && (
+                    <button
+                      onClick={() => {
+                        setActiveMode("audio");
+                        toggleAudioPlay();
+                      }}
+                      className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "audio"
+                        ? "bg-[#159ac1] text-white"
+                        : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
+                        }`}
+                    >
+                      <Volume2 className="mr-1 inline h-3.5 w-3.5" /> Audio narration
+                    </button>
+                  )}
+
+                  {/* Interactive model - only if selected in onboarding */}
+                  {showInteractive && (
+                    <button
+                      onClick={() => {
+                        setActiveMode("visual");
+                        const el = document.getElementById("interactive-visual-sandbox");
+                        if (el) el.scrollIntoView({ behavior: "smooth" });
+                      }}
+                      className="rounded-full px-3 py-2 text-xs font-semibold bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7] transition"
+                    >
+                      <Layers className="mr-1 inline h-3.5 w-3.5" /> Interactive model
+                    </button>
+                  )}
+
                   <button
                     onClick={() => setActiveMode("hint")}
                     className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "hint"
@@ -386,6 +700,15 @@ export default function TopicLesson() {
                   >
                     <HelpCircle className="mr-1 inline h-3.5 w-3.5" /> I’m stuck
                   </button>
+                  <button
+                    onClick={() => setActiveMode("tutor")}
+                    className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "tutor"
+                      ? "bg-[#159ac1] text-white"
+                      : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
+                      }`}
+                  >
+                    <Bot className="mr-1 inline h-3.5 w-3.5" /> AI Tutor
+                  </button>
                 </div>
                 {activeMode && activeMode !== "visual" && (
                   <div
@@ -400,9 +723,13 @@ export default function TopicLesson() {
                             ? "Example learning"
                             : activeMode === "simple"
                               ? "Simpler explanation"
-                              : activeMode === "hint"
-                                ? "A gentle hint"
-                                : "You are not alone"}
+                              : activeMode === "audio"
+                                ? "Audio narration"
+                                : activeMode === "hint"
+                                  ? "A gentle hint"
+                                  : activeMode === "stuck"
+                                    ? "You are not alone"
+                                    : "Neura AI Tutor"}
                       </span>
                       <button onClick={() => setActiveMode("visual")} className="text-xs font-semibold text-[#159ac1]">
                         Hide extra details
@@ -430,11 +757,24 @@ export default function TopicLesson() {
                       Question {currentQIdx + 1} of {lessonQuestions.length}
                     </span>
                   </div>
-                  {answeredCount > 0 && (
-                    <span className="text-xs font-bold text-[#277f59] bg-[#eaf7f1] px-2.5 py-1 rounded-full">
-                      Score: {correctCount}/{lessonQuestions.length}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveMode("tutor");
+                        const el = document.getElementById("ai-tutor-container");
+                        if (el) el.scrollIntoView({ behavior: "smooth" });
+                      }}
+                      className="flex items-center gap-1 rounded-full bg-[#e8f8fc] px-2.5 py-1 text-xs font-semibold text-[#159ac1] transition hover:bg-[#d7f2f7]"
+                    >
+                      <Bot className="h-3.5 w-3.5" /> Ask AI Tutor
+                    </button>
+                    {answeredCount > 0 && (
+                      <span className="text-xs font-bold text-[#277f59] bg-[#eaf7f1] px-2.5 py-1 rounded-full">
+                        Score: {correctCount}/{lessonQuestions.length}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Question Selector Tabs */}
