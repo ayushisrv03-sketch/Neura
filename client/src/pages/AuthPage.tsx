@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { clearTopicCompletedLessons } from "@/lib/topicCurriculum";
+import {
+  clearUserLearningPreferences,
+  setStoredFormats,
+  setStoredSubjects,
+  DEFAULT_FORMATS,
+  DEFAULT_SUBJECTS,
+} from "@/hooks/useLearningPreferences";
 
 type Tab = "login" | "signup";
 
@@ -75,6 +82,11 @@ export default function AuthPage({ defaultTab }: { defaultTab: Tab }) {
         setError(data.error || "Incorrect email or password.");
         return;
       }
+      if (data.user) {
+        try {
+          localStorage.setItem("manus-runtime-user-info", JSON.stringify(data.user));
+        } catch {}
+      }
       setLocation(getNextParam() || "/dashboard");
     } catch {
       setError("Couldn't reach the server. Please try again.");
@@ -110,8 +122,20 @@ export default function AuthPage({ defaultTab }: { defaultTab: Tab }) {
         setError(data.error || "Something went wrong creating your account.");
         return;
       }
-      // Ensure new user starts with 0 lesson ticks
+      if (data.user) {
+        try {
+          localStorage.setItem("manus-runtime-user-info", JSON.stringify(data.user));
+        } catch {}
+      }
+      // Ensure new user starts fresh with 0 lesson ticks and default preferences (Text & Visual only)
       clearTopicCompletedLessons();
+      clearUserLearningPreferences();
+      const newUserId = data.user?.id || data.user?.openId || data.user?.email;
+      if (newUserId) {
+        clearUserLearningPreferences(newUserId);
+        setStoredFormats([...DEFAULT_FORMATS], newUserId);
+        setStoredSubjects([...DEFAULT_SUBJECTS], newUserId);
+      }
       setLocation("/onboarding");
     } catch {
       setError("Couldn't reach the server. Please try again.");

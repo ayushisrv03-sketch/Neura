@@ -87,7 +87,7 @@ export default function Home() {
   const [taskOverrides, setTaskOverrides] = useState<Record<number, boolean>>({});
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"courses" | "tasks">("courses");
-  const { selectedSubjects, setSelectedSubjects, isSubjectSelected, subjectSummary, hasBoth } = useLearningPreferences();
+  const { selectedSubjects, setSelectedSubjects, isSubjectSelected, subjectSummary, hasBoth } = useLearningPreferences(user?.id || user?.openId || user?.email);
 
   const allCourses = data?.courses?.length ? data.courses : initialCourses;
   const courses = useMemo(() => allCourses.filter(course => isSubjectSelected(course.subject)), [allCourses, isSubjectSelected]);

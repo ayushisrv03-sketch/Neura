@@ -28,9 +28,19 @@ const stepTitles = ['Getting to know you', 'Exploration', 'Preferences', 'Pace &
 export default function OnboardingPage() {
   const [, setLocation] = useLocation()
   const { user } = useAuth()
-  const { selectedSubjects, setSelectedSubjects, subjectSummary, selectedFormats, setSelectedFormats } = useLearningPreferences()
+  const userId = user?.id || user?.openId || user?.email
+  const { selectedSubjects, setSelectedSubjects, subjectSummary, selectedFormats, setSelectedFormats } = useLearningPreferences(userId)
   const [step, setStep] = useState(1)
-  const [name, setName] = useState('')
+  const [name, setName] = useState(() => {
+    try {
+      const raw = localStorage.getItem("manus-runtime-user-info");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return parsed?.name || '';
+      }
+    } catch {}
+    return '';
+  })
   const [calmMode, setCalmMode] = useState(false)
   const [dyslexiaFont, setDyslexiaFont] = useState(false)
   const [pace, setPace] = useState('Normal (~20–30 min)')
