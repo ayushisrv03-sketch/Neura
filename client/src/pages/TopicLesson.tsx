@@ -106,8 +106,7 @@ export default function TopicLesson() {
   };
 
   const [activeMode, setActiveMode] = useState<
-<<<<<<< HEAD
-    "steps" | "visual" | "example" | "simple" | "audio" | "hint" | "stuck" | "tutor"
+    "steps" | "visual" | "example" | "audio" | "hint" | "stuck" | "tutor"
   >(() => {
     if (typeof window !== "undefined") {
       const search = new URLSearchParams(window.location.search);
@@ -117,10 +116,6 @@ export default function TopicLesson() {
     if (!isPredefinedTopic(topic)) return "tutor";
     return "visual";
   });
-=======
-    "steps" | "visual" | "example" | "audio" | "hint" | "stuck" | "tutor"
-  >("visual");
->>>>>>> origin/lessons
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [currentQIdx, setCurrentQIdx] = useState<number>(0);
   const [tutorMessages, setTutorMessages] = useState<TutorMessage[]>([
@@ -595,8 +590,7 @@ export default function TopicLesson() {
   return (
     <DashboardLayout allowGuest>
       <div className="min-h-screen bg-[#f6fbfd] text-[#214554]">
-<<<<<<< HEAD
-        <main className="mx-auto max-w-[1100px] px-5 py-8 sm:px-8 lg:px-10">
+        <main className="mx-auto max-w-[1300px] px-4 py-8 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-3 mb-2">
             <button
               onClick={() => setLocation("/dashboard")}
@@ -641,16 +635,6 @@ export default function TopicLesson() {
               )}
             </div>
           )}
-
-=======
-        <main className="mx-auto max-w-[1300px] px-4 py-8 sm:px-6 lg:px-8">
-          <button
-            onClick={() => setLocation("/dashboard")}
-            className="flex items-center gap-2 text-sm font-bold text-[#159ac1] transition hover:text-[#0e7795]"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back to dashboard
-          </button>
->>>>>>> origin/lessons
           <div className="mt-7 flex flex-col justify-between gap-5 md:flex-row md:items-end">
             <div>
               <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#e8f8fc] px-3 py-1.5 text-xs font-bold text-[#159ac1]">

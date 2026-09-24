@@ -127,7 +127,6 @@ export function setStoredFormats(formats: string[], userId?: string | number | n
 }
 
 /**
-<<<<<<< HEAD
  * Reads stored dyslexia font preference safely from localStorage.
  * Defaults to false (OFF) for new users.
  */
@@ -170,7 +169,10 @@ export function setStoredDyslexiaFont(enabled: boolean): void {
     window.dispatchEvent(new CustomEvent(DYSLEXIA_FONT_EVENT, { detail: enabled }));
   } catch (err) {
     console.warn("[Preferences] Could not persist dyslexia font preference to localStorage:", err);
-=======
+  }
+}
+
+/**
  * Clears stored learning preferences to prevent memory leakage between users.
  */
 export function clearUserLearningPreferences(userId?: string | number | null): void {
@@ -189,12 +191,10 @@ export function clearUserLearningPreferences(userId?: string | number | null): v
     window.dispatchEvent(new CustomEvent(PREFERENCES_EVENT, { detail: { subjects: [...DEFAULT_SUBJECTS], userKey } }));
   } catch (err) {
     console.warn("[Preferences] Could not clear learning preferences:", err);
->>>>>>> origin/lessons
   }
 }
 
 /**
-<<<<<<< HEAD
  * Applies the stored dyslexia font preference to document.documentElement and document.body.
  */
 export function applyStoredDyslexiaFont(): void {
@@ -213,23 +213,16 @@ export function applyStoredDyslexiaFont(): void {
  * Hook providing reactive access to the user's selected subjects, formats,
  * and dyslexia font preference throughout the application.
  */
-export function useLearningPreferences() {
-  const [selectedSubjects, setSubjectsState] = useState<string[]>(() => getStoredSubjects());
-  const [selectedFormats, setFormatsState] = useState<string[]>(() => getStoredFormats());
-  const [dyslexiaFont, setDyslexiaFontState] = useState<boolean>(() => getStoredDyslexiaFont());
-=======
- * Hook providing reactive access to the user's selected subjects and formats throughout the application.
- */
 export function useLearningPreferences(explicitUserId?: string | number | null) {
   const [selectedSubjects, setSubjectsState] = useState<string[]>(() => getStoredSubjects(explicitUserId));
   const [selectedFormats, setFormatsState] = useState<string[]>(() => getStoredFormats(explicitUserId));
+  const [dyslexiaFont, setDyslexiaFontState] = useState<boolean>(() => getStoredDyslexiaFont());
 
   // Re-sync when userId changes
   useEffect(() => {
     setSubjectsState(getStoredSubjects(explicitUserId));
     setFormatsState(getStoredFormats(explicitUserId));
   }, [explicitUserId]);
->>>>>>> origin/lessons
 
   useEffect(() => {
     // Ensure document.documentElement and document.body have the proper font class on mount

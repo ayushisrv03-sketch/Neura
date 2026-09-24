@@ -1,18 +1,15 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { clearTopicCompletedLessons } from "@/lib/topicCurriculum";
-<<<<<<< HEAD
-import { useDyslexiaFont } from "@/hooks/useLearningPreferences";
-import { DyslexiaFontToggle } from "@/components/DyslexiaFontToggle";
-=======
 import {
+  useDyslexiaFont,
   clearUserLearningPreferences,
   setStoredFormats,
   setStoredSubjects,
   DEFAULT_FORMATS,
   DEFAULT_SUBJECTS,
 } from "@/hooks/useLearningPreferences";
->>>>>>> origin/lessons
+import { DyslexiaFontToggle } from "@/components/DyslexiaFontToggle";
 
 type Tab = "login" | "signup";
 

@@ -28,12 +28,8 @@ const stepTitles = ['Getting to know you', 'Exploration', 'Preferences', 'Pace &
 export default function OnboardingPage() {
   const [, setLocation] = useLocation()
   const { user } = useAuth()
-<<<<<<< HEAD
-  const { selectedSubjects, setSelectedSubjects, subjectSummary, selectedFormats, setSelectedFormats, dyslexiaFont, setDyslexiaFont } = useLearningPreferences()
-=======
   const userId = user?.id || user?.openId || user?.email
-  const { selectedSubjects, setSelectedSubjects, subjectSummary, selectedFormats, setSelectedFormats } = useLearningPreferences(userId)
->>>>>>> origin/lessons
+  const { selectedSubjects, setSelectedSubjects, subjectSummary, selectedFormats, setSelectedFormats, dyslexiaFont, setDyslexiaFont } = useLearningPreferences(userId)
   const [step, setStep] = useState(1)
   const [name, setName] = useState(() => {
     try {
