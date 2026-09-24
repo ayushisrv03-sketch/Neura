@@ -65,6 +65,10 @@ export default function TopicLesson() {
   const showInteractive = selectedFormats.some((f) => f.toLowerCase() === "interactive");
 
   const { data } = trpc.dashboard.overview.useQuery();
+  const { data: strategyProfileData } = trpc.adaptive.getStrategyProfile.useQuery(
+    { topic: topic || "" },
+    { enabled: !!topic }
+  );
   const utils = trpc.useUtils();
   const logStudy = trpc.dashboard.logStudy.useMutation();
 
@@ -494,13 +498,39 @@ export default function TopicLesson() {
         question.
       </p>
     ) : activeMode === "stuck" ? (
-      <div className="text-sm text-[#5e7d87]">
-        <p>It is completely okay to feel stuck. Take one small step:</p>
-        <ul className="mt-2 list-disc space-y-1 pl-5">
-          <li>Read the short explanation again.</li>
-          <li>Interact with the visual model above.</li>
-          <li>Try the easiest part of the question first.</li>
+      <div className="space-y-3.5 text-sm text-[#5e7d87]">
+        <div className="rounded-xl border border-sky-100 bg-sky-50/60 p-3.5 text-[#173c4b]">
+          <p className="font-semibold text-sky-800 flex items-center gap-1.5">
+            <Lightbulb className="h-4 w-4 text-sky-600" />
+            It is completely okay to feel stuck! Let's take it one step at a time:
+          </p>
+          <p className="mt-1.5 text-xs text-[#5e7d87] leading-relaxed">
+            {strategyProfileData?.profile?.preferredStrategy === "step-by-step"
+              ? "Tip: Break the question down into 2 small micro-steps. Focus only on Step 1 first."
+              : strategyProfileData?.profile?.preferredStrategy === "example-based"
+              ? "Tip: Think about a real-world story or analogy (like sharing slices of pizza or items)."
+              : strategyProfileData?.profile?.preferredStrategy === "socratic"
+              ? "Tip: Ask yourself: what clue is given in the question, and what is it asking for?"
+              : "Tip: Look at the visual model diagram above to see the proportions in action."}
+          </p>
+        </div>
+        <ul className="list-disc space-y-1 pl-5 text-xs sm:text-sm">
+          <li>Read the short explanation and worked example above.</li>
+          <li>Interact with the visual model or change the view mode.</li>
+          <li>Or ask your AI Tutor below to explain it in a completely different way!</li>
         </ul>
+        <button
+          type="button"
+          onClick={() => {
+            setActiveMode("tutor");
+            setTimeout(() => {
+              document.getElementById("ai-tutor-container")?.scrollIntoView({ behavior: "smooth" });
+            }, 100);
+          }}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-700"
+        >
+          <Bot className="h-3.5 w-3.5" /> Ask AI Tutor for a simpler explanation
+        </button>
       </div>
     ) : activeMode === "tutor" ? (
       <div id="ai-tutor-container" className="space-y-4">

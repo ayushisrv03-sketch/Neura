@@ -11,6 +11,12 @@ import {
   demoCourses,
   demoTasks,
   learningModeEvents,
+  StudentStrategyObservation,
+  StudentStrategyProfile,
+  InsertStudentStrategyObservation,
+  InsertStudentStrategyProfile,
+  studentStrategyObservations,
+  studentStrategyProfiles,
   studySessions,
   tasks,
   users,
@@ -526,3 +532,217 @@ export async function recordLearningMode(userId: number, courseId: number, topic
     console.warn("[Database] recordLearningMode failed:", error);
   }
 }
+
+// In-memory fallback stores for adaptive strategy observations & profiles
+const inMemoryStrategyObservations: StudentStrategyObservation[] = [];
+let nextObservationId = 1;
+const inMemoryStrategyProfiles = new Map<string, StudentStrategyProfile>();
+let nextProfileId = 1;
+
+export interface StrategyObservationInput {
+  assessmentId?: string;
+  topic?: string;
+  lessonId?: number;
+  concept: string;
+  strategy: string;
+  questionDifficulty?: string;
+  correct: number;
+  score?: number;
+  timeTaken: number;
+  attemptCount?: number;
+  hintUsed?: number;
+}
+
+export function calculateStrategyScore(obs: StrategyObservationInput): number {
+  let score = obs.correct ? 50 : 10;
+  // Speed component
+  if (obs.timeTaken <= 15) {
+    score += obs.correct ? 20 : 5;
+  } else if (obs.timeTaken <= 35) {
+    score += obs.correct ? 15 : 0;
+  } else {
+    score += obs.correct ? 5 : -5;
+  }
+  // Attempt count bonus
+  const attempts = obs.attemptCount ?? 1;
+  if (attempts === 1) score += 15;
+  else if (attempts === 2) score += 5;
+  
+  // Hint penalty
+  if (!obs.hintUsed) score += 15;
+
+  return Math.max(0, Math.min(100, score));
+}
+
+export async function recordStrategyObservationsBatch(
+  userId: number,
+  topic: string,
+  observations: StrategyObservationInput[]
+): Promise<{ preferredStrategy: string; strategyScores: Record<string, number>; confidenceScore: number }> {
+  const strategyScoreMap: Record<string, { total: number; count: number }> = {
+    visual: { total: 0, count: 0 },
+    "step-by-step": { total: 0, count: 0 },
+    "example-based": { total: 0, count: 0 },
+    textual: { total: 0, count: 0 },
+    socratic: { total: 0, count: 0 },
+  };
+
+  const now = new Date();
+
+  for (const obs of observations) {
+    const calculatedScore = calculateStrategyScore(obs);
+    const observationRecord: StudentStrategyObservation = {
+      id: nextObservationId++,
+      userId,
+      assessmentId: obs.assessmentId ?? null,
+      topic: obs.topic || topic,
+      lessonId: obs.lessonId ?? null,
+      concept: obs.concept,
+      strategy: obs.strategy,
+      questionDifficulty: obs.questionDifficulty || "medium",
+      correct: obs.correct,
+      score: calculatedScore,
+      timeTaken: obs.timeTaken,
+      attemptCount: obs.attemptCount ?? 1,
+      hintUsed: obs.hintUsed ?? 0,
+      createdAt: now,
+    };
+    inMemoryStrategyObservations.push(observationRecord);
+
+    if (!strategyScoreMap[obs.strategy]) {
+      strategyScoreMap[obs.strategy] = { total: 0, count: 0 };
+    }
+    strategyScoreMap[obs.strategy].total += calculatedScore;
+    strategyScoreMap[obs.strategy].count += 1;
+  }
+
+  // Calculate final strategy average scores
+  const finalScores: Record<string, number> = {};
+  let bestStrategy = "visual";
+  let highestAvg = -1;
+
+  for (const [strat, data] of Object.entries(strategyScoreMap)) {
+    const avg = data.count > 0 ? Math.round(data.total / data.count) : 50;
+    finalScores[strat] = avg;
+    if (avg > highestAvg) {
+      highestAvg = avg;
+      bestStrategy = strat;
+    }
+  }
+
+  const confidenceScore = Math.min(100, Math.max(20, observations.length * 20));
+  const profileKey = `${userId}:${topic}`;
+
+  const profileRecord: StudentStrategyProfile = {
+    id: nextProfileId++,
+    userId,
+    topic,
+    strategyScores: JSON.stringify(finalScores),
+    preferredStrategy: bestStrategy,
+    confidenceScore,
+    updatedAt: now,
+    createdAt: now,
+  };
+  inMemoryStrategyProfiles.set(profileKey, profileRecord);
+
+  const db = await getDb();
+  if (db) {
+    try {
+      for (const obs of observations) {
+        await db.insert(studentStrategyObservations).values({
+          userId,
+          assessmentId: obs.assessmentId ?? null,
+          topic: obs.topic || topic,
+          lessonId: obs.lessonId ?? null,
+          concept: obs.concept,
+          strategy: obs.strategy,
+          questionDifficulty: obs.questionDifficulty || "medium",
+          correct: obs.correct,
+          score: calculateStrategyScore(obs),
+          timeTaken: obs.timeTaken,
+          attemptCount: obs.attemptCount ?? 1,
+          hintUsed: obs.hintUsed ?? 0,
+        });
+      }
+
+      await db
+        .insert(studentStrategyProfiles)
+        .values({
+          userId,
+          topic,
+          strategyScores: JSON.stringify(finalScores),
+          preferredStrategy: bestStrategy,
+          confidenceScore,
+        })
+        .onDuplicateKeyUpdate({
+          set: {
+            strategyScores: JSON.stringify(finalScores),
+            preferredStrategy: bestStrategy,
+            confidenceScore,
+            updatedAt: now,
+          },
+        });
+    } catch (error) {
+      console.warn("[Database] recordStrategyObservationsBatch DB insert failed, fallback stored in memory:", error);
+    }
+  }
+
+  return {
+    preferredStrategy: bestStrategy,
+    strategyScores: finalScores,
+    confidenceScore,
+  };
+}
+
+export async function getStudentStrategyProfile(
+  userId: number,
+  topic: string
+): Promise<{ preferredStrategy: string; strategyScores: Record<string, number>; confidenceScore: number } | null> {
+  const profileKey = `${userId}:${topic}`;
+  const memoryProfile = inMemoryStrategyProfiles.get(profileKey);
+
+  const db = await getDb();
+  if (db) {
+    try {
+      const rows = await db
+        .select()
+        .from(studentStrategyProfiles)
+        .where(and(eq(studentStrategyProfiles.userId, userId), eq(studentStrategyProfiles.topic, topic)))
+        .limit(1);
+
+      if (rows && rows.length > 0) {
+        const row = rows[0];
+        let parsedScores = {};
+        try {
+          parsedScores = JSON.parse(row.strategyScores);
+        } catch {
+          parsedScores = {};
+        }
+        return {
+          preferredStrategy: row.preferredStrategy,
+          strategyScores: parsedScores,
+          confidenceScore: row.confidenceScore ?? 0,
+        };
+      }
+    } catch (error) {
+      console.warn("[Database] getStudentStrategyProfile DB query failed, using in-memory:", error);
+    }
+  }
+
+  if (memoryProfile) {
+    let parsedScores = {};
+    try {
+      parsedScores = JSON.parse(memoryProfile.strategyScores);
+    } catch {
+      parsedScores = {};
+    }
+    return {
+      preferredStrategy: memoryProfile.preferredStrategy,
+      strategyScores: parsedScores,
+      confidenceScore: memoryProfile.confidenceScore ?? 0,
+    };
+  }
+
+  return null;
+}
+

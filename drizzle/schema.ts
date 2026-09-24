@@ -63,12 +63,44 @@ export const learningModeEvents = mysqlTable("learningModeEvents", {
   selectedAt: timestamp("selectedAt").defaultNow().notNull(),
 });
 
+export const studentStrategyObservations = mysqlTable("studentStrategyObservations", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  assessmentId: varchar("assessmentId", { length: 64 }),
+  topic: varchar("topic", { length: 180 }).notNull(),
+  lessonId: int("lessonId"),
+  concept: varchar("concept", { length: 180 }).notNull(),
+  strategy: varchar("strategy", { length: 50 }).notNull(),
+  questionDifficulty: varchar("questionDifficulty", { length: 40 }).default("medium"),
+  correct: int("correct").notNull(),
+  score: int("score").default(0),
+  timeTaken: int("timeTaken").notNull(),
+  attemptCount: int("attemptCount").default(1),
+  hintUsed: int("hintUsed").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const studentStrategyProfiles = mysqlTable("studentStrategyProfiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  topic: varchar("topic", { length: 180 }).notNull(),
+  strategyScores: text("strategyScores").notNull(),
+  preferredStrategy: varchar("preferredStrategy", { length: 50 }).notNull(),
+  confidenceScore: int("confidenceScore").default(0),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Course = typeof courses.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
 export type StudySession = typeof studySessions.$inferSelect;
 export type LearningModeEvent = typeof learningModeEvents.$inferSelect;
+export type StudentStrategyObservation = typeof studentStrategyObservations.$inferSelect;
+export type InsertStudentStrategyObservation = typeof studentStrategyObservations.$inferInsert;
+export type StudentStrategyProfile = typeof studentStrategyProfiles.$inferSelect;
+export type InsertStudentStrategyProfile = typeof studentStrategyProfiles.$inferInsert;
 
 const seedDate = new Date();
 
@@ -78,7 +110,7 @@ export const demoCourses = [
   { title: "Geometry", subject: "Maths", level: "Grade 7", progress: 0, lessonsCompleted: 0, lessonsTotal: 12, nextLesson: "Angles and triangles", accent: "lilac", icon: "geometry" },
   { title: "Photosynthesis", subject: "Science", level: "Grade 6", progress: 0, lessonsCompleted: 0, lessonsTotal: 12, nextLesson: "The role of sunlight", accent: "green", icon: "leaf" },
   { title: "States of matter", subject: "Science", level: "Grade 6", progress: 0, lessonsCompleted: 0, lessonsTotal: 12, nextLesson: "Particles in motion", accent: "orange", icon: "matter" },
-  { title: "Parts of a plant", subject: "Science", level: "Grade 5", progress: 0, lessonsCompleted: 0, lessonsTotal: 12, nextLesson: "Roots and their jobs", accent: "yellow", icon: "plant" },
+  { title: "Parts of a plant", subject: "Science", level: "Grade 5", progress: 0, lessonsCompleted: 0, lessonsTotal: 12, nextLesson: "Roots and jobs", accent: "yellow", icon: "plant" },
 ] as const;
 
 export const demoTasks = [
@@ -88,3 +120,4 @@ export const demoTasks = [
 ];
 
 export { seedDate };
+
