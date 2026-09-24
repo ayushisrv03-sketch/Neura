@@ -8,6 +8,7 @@ import { BookOpenCheck, CheckSquare2, LayoutDashboard, LineChart, LogIn, LogOut,
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation, useRoute } from "wouter";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
+import { DyslexiaFontToggle } from "./DyslexiaFontToggle";
 import { TopicSidebar } from "./TopicSidebar";
 
 const menuItems = [
@@ -57,6 +58,9 @@ function DashboardLayoutContent({ children, setSidebarWidth }: { children: React
   const [topicMatch, topicParams] = useRoute("/dashboard/lessons/:topic");
   const isTopicRoute = Boolean(topicMatch && topicParams?.topic);
   const currentTopic = topicParams?.topic ? decodeURIComponent(topicParams.topic) : "";
+  const [tutorMatch, tutorParams] = useRoute("/dashboard/tutor/:topic");
+  const isTutorRoute = Boolean(tutorMatch && tutorParams?.topic);
+  const currentTutorTopic = tutorParams?.topic ? decodeURIComponent(tutorParams.topic) : "";
 
   const { state, toggleSidebar } = useSidebar();
   const [isResizing, setIsResizing] = useState(false);
@@ -125,6 +129,9 @@ function DashboardLayoutContent({ children, setSidebarWidth }: { children: React
             </>
           )}
           <SidebarFooter className="border-t border-[#e6f0f3] p-3">
+            <div className="mb-2 group-data-[collapsible=icon]:hidden">
+              <DyslexiaFontToggle variant="sidebar" />
+            </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild><button className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition hover:bg-[#f1fafc] focus-visible:ring-2 focus-visible:ring-[#159ac1] group-data-[collapsible=icon]:justify-center"><Avatar className="h-9 w-9 shrink-0 border-2 border-[#dff4f8]"><AvatarFallback className="bg-[#dff4f8] text-xs font-bold text-[#159ac1]">{displayName.slice(0, 2).toUpperCase()}</AvatarFallback></Avatar><div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden"><p className="truncate text-sm font-semibold text-[#234b5b]">{displayName}</p><p className="mt-0.5 truncate text-xs text-[#8ba5ae]">{displayEmail}</p></div></button></DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52 rounded-xl">{user ? <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive focus:text-destructive"><LogOut className="mr-2 h-4 w-4" />Sign out</DropdownMenuItem> : <DropdownMenuItem onClick={() => startLogin()} className="cursor-pointer"><LogIn className="mr-2 h-4 w-4" />Sign in to save progress</DropdownMenuItem>}</DropdownMenuContent>
@@ -134,7 +141,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: { children: React
         <div className={`absolute right-0 top-0 h-full w-1 cursor-col-resize transition-colors hover:bg-[#159ac1]/20 ${isCollapsed ? "hidden" : ""}`} onMouseDown={() => setIsResizing(true)} />
       </div>
       <SidebarInset className="bg-[#f6fbfd]">
-        {isMobile && <div className="sticky top-0 z-40 flex h-14 items-center gap-2 border-b border-[#e6f0f3] bg-white/95 px-3 backdrop-blur"><SidebarTrigger className="h-9 w-9 rounded-lg" /><span className="text-sm font-semibold text-[#234b5b]">{isTopicRoute ? `${currentTopic} Lessons` : activeMenuItem.label}</span></div>}
+        {isMobile && <div className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-[#e6f0f3] bg-white/95 px-3 backdrop-blur"><div className="flex items-center gap-2"><SidebarTrigger className="h-9 w-9 rounded-lg" /><span className="text-sm font-semibold text-[#234b5b]">{isTopicRoute ? `${currentTopic} Lessons` : isTutorRoute ? `${currentTutorTopic} • AI Tutor` : activeMenuItem.label}</span></div><DyslexiaFontToggle variant="compact" /></div>}
         <main className="min-h-screen p-0">{children}</main>
       </SidebarInset>
     </>

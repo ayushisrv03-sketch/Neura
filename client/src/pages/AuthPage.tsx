@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { clearTopicCompletedLessons } from "@/lib/topicCurriculum";
+import { useDyslexiaFont } from "@/hooks/useLearningPreferences";
+import { DyslexiaFontToggle } from "@/components/DyslexiaFontToggle";
 
 type Tab = "login" | "signup";
 
@@ -17,7 +19,7 @@ export default function AuthPage({ defaultTab }: { defaultTab: Tab }) {
   const [tab, setTab] = useState<Tab>(defaultTab);
   const [showLoginPw, setShowLoginPw] = useState(false);
   const [showSignupPw, setShowSignupPw] = useState(false);
-  const [dyslexiaOn, setDyslexiaOn] = useState(false);
+  const { dyslexiaFont: dyslexiaOn, toggleDyslexiaFont } = useDyslexiaFont();
   const [speaking, setSpeaking] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -123,7 +125,7 @@ export default function AuthPage({ defaultTab }: { defaultTab: Tab }) {
   return (
     <div
       className={`min-h-screen bg-[#faf8ff] text-slate-800 font-sans flex flex-col justify-between antialiased selection:bg-sky-100 selection:text-sky-900 transition-colors duration-300 ${
-        dyslexiaOn ? "dyslexia-mode" : ""
+        dyslexiaOn ? "dyslexia-font" : ""
       }`}
     >
       {/* Top Utility Ribbon */}
@@ -139,18 +141,7 @@ export default function AuthPage({ defaultTab }: { defaultTab: Tab }) {
           <span className="hidden sm:inline text-slate-500">Take all the time you need</span>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            onClick={() => setDyslexiaOn((v) => !v)}
-            type="button"
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-600/30 ${
-              dyslexiaOn
-                ? "bg-sky-50 border-sky-400 text-sky-900"
-                : "bg-white border-slate-200 hover:border-sky-300 text-slate-600 hover:text-sky-900"
-            }`}
-          >
-            <span className="font-bold">Tt</span>
-            <span>Dyslexia Font</span>
-          </button>
+          <DyslexiaFontToggle />
           <Link className="px-3 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 transition text-xs font-medium" href="/">
             Back to Home
           </Link>

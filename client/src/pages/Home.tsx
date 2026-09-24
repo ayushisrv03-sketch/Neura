@@ -1,5 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
+import { DashboardSearch } from "@/components/DashboardSearch";
+import { DyslexiaFontToggle } from "@/components/DyslexiaFontToggle";
 import { useLearningPreferences } from "@/hooks/useLearningPreferences";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -7,6 +9,7 @@ import {
   ArrowRight,
   Bell,
   BookOpen,
+  Bot,
   Check,
   CheckCircle2,
   ChevronRight,
@@ -141,10 +144,21 @@ export default function Home() {
     <DashboardLayout allowGuest>
       <div className="min-h-screen bg-[#f6fbfd] text-[#214554]">
         <header className="sticky top-0 z-30 border-b border-[#e5f0f3] bg-[#f6fbfd]/90 backdrop-blur-xl">
-          <div className="mx-auto flex h-[76px] max-w-[1440px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-10">
-            <div className="flex min-w-0 items-center gap-3 lg:hidden"><div className="grid h-9 w-9 place-items-center rounded-xl bg-[#159ac1] text-white"><Sparkles className="h-4 w-4" /></div><span className="text-lg font-bold tracking-tight text-[#173c4b]">neura</span></div>
-            <div className="relative hidden w-full max-w-md lg:block"><Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8aa7b1]" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search courses, lessons, or topics" className="h-11 w-full rounded-xl border border-[#e4eff2] bg-white pl-11 pr-4 text-sm text-[#214554] outline-none transition placeholder:text-[#9ab0b8] focus:border-[#8ad5e4] focus:ring-4 focus:ring-[#dff5fa]" /></div>
-            <div className="ml-auto flex items-center gap-3">
+          <div className="mx-auto flex h-[76px] max-w-[1440px] items-center justify-between gap-3 px-5 sm:px-8 lg:px-10">
+            <div className="flex min-w-0 items-center gap-3 shrink-0">
+              <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#159ac1] text-white">
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <span className="text-lg font-bold tracking-tight text-[#173c4b]">neura</span>
+            </div>
+            <div className="flex-1 max-w-md mx-2 sm:mx-4">
+              <DashboardSearch
+                onSearchChange={setQuery}
+                externalQuery={query}
+              />
+            </div>
+            <div className="ml-auto flex items-center gap-2.5 sm:gap-3 shrink-0">
+              <DyslexiaFontToggle />
               <button aria-label="Notifications" onClick={() => toast("You're all caught up", { description: "No new learning notifications." })} className="relative grid h-10 w-10 place-items-center rounded-xl border border-[#e4eff2] bg-white text-[#72909c] transition hover:border-[#bde3eb] hover:text-[#159ac1]"><Bell className="h-[18px] w-[18px]" /><span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#f59b75]" /></button>
               <div className="hidden h-8 w-px bg-[#e4eff2] sm:block" />
               <div className="flex items-center gap-2.5">
@@ -241,8 +255,35 @@ export default function Home() {
                 />
               ))}
               {!filteredCourses.length && (
-                <div className="col-span-full rounded-2xl border border-dashed border-[#cfe7ed] bg-white p-10 text-center text-sm text-[#8aa7b1]">
-                  No courses match “{query}” in your active {subjectSummary} curriculum.
+                <div className="col-span-full rounded-2xl border border-[#fbd8c6] bg-white p-8 text-center shadow-sm">
+                  <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-[#fff2eb] text-[#e0753a]">
+                    <Bot className="h-6 w-6" />
+                  </div>
+                  <span className="inline-block rounded-full bg-[#fde1d3] px-3 py-1 text-xs font-bold text-[#bd541b]">
+                    Not in curriculum right now
+                  </span>
+                  <h3 className="mt-2 text-lg font-bold text-[#173c4b]">
+                    “{query}” is not in the curriculum right now
+                  </h3>
+                  <p className="mx-auto mt-2 max-w-md text-sm text-[#7897a2] leading-relaxed">
+                    Our standard curriculum doesn't include this topic yet, but you don't have to miss out! You can learn “{query}” right now step-by-step with your personal Neura AI Tutor.
+                  </p>
+                  <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                    <button
+                      onClick={() => setLocation(`/dashboard/lessons/${encodeURIComponent(query.trim())}?mode=tutor`)}
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#159ac1] px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#1088aa] transition"
+                    >
+                      <Bot className="h-4 w-4" />
+                      Learn “{query}” with AI Tutor
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setQuery("")}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-[#e4eff2] bg-white px-4 py-2.5 text-xs font-bold text-[#688a95] hover:bg-[#f6fbfd] transition"
+                    >
+                      Clear search
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

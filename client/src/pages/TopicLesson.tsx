@@ -1,8 +1,10 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import { DyslexiaFontToggle } from "@/components/DyslexiaFontToggle";
 import { LessonVisualDispatcher } from "@/components/visuals/LessonVisualDispatcher";
 import {
   getTopicCompletedLessons,
   getTopicCurriculum,
+  isPredefinedTopic,
   lessons,
   setTopicLessonCompleted,
 } from "@/lib/topicCurriculum";
@@ -87,12 +89,42 @@ export default function TopicLesson() {
     return 0;
   });
 
+  const isPredefined = useMemo(() => isPredefinedTopic(topic), [topic]);
+
+  // If this topic is not in the predefined curriculum, navigate directly to the dedicated AI Tutor page
+  useEffect(() => {
+    if (topic && !isPredefinedTopic(topic)) {
+      const search = window.location.search;
+      setLocation(`/dashboard/tutor/${encodeURIComponent(topic)}${search}`, { replace: true });
+    }
+  }, [topic, setLocation]);
+
+  const getInitialTutorGreeting = (topicName: string): TutorMessage => {
+    if (isPredefinedTopic(topicName)) {
+      return INITIAL_TUTOR_MESSAGE;
+    }
+    return {
+      role: "assistant",
+      content: `Hey! While **${topicName}** is not in our standard curriculum right now, I'm your Neura AI Tutor and I'm ready to teach you everything about it step by step! What would you like to explore or learn first?`,
+    };
+  };
+
   const [activeMode, setActiveMode] = useState<
     "steps" | "visual" | "example" | "simple" | "audio" | "hint" | "stuck" | "tutor"
-  >("visual");
+  >(() => {
+    if (typeof window !== "undefined") {
+      const search = new URLSearchParams(window.location.search);
+      const modeParam = search.get("mode");
+      if (modeParam === "tutor") return "tutor";
+    }
+    if (!isPredefinedTopic(topic)) return "tutor";
+    return "visual";
+  });
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [currentQIdx, setCurrentQIdx] = useState<number>(0);
-  const [tutorMessages, setTutorMessages] = useState<TutorMessage[]>([INITIAL_TUTOR_MESSAGE]);
+  const [tutorMessages, setTutorMessages] = useState<TutorMessage[]>([
+    getInitialTutorGreeting(topic),
+  ]);
   const [tutorInput, setTutorInput] = useState("");
   const [tutorError, setTutorError] = useState<string | null>(null);
   const tutorScrollRef = useRef<HTMLDivElement>(null);
@@ -160,7 +192,7 @@ export default function TopicLesson() {
       setCompletedIndices(getTopicCompletedLessons(topic, userId));
       setAnswers({});
       setCurrentQIdx(0);
-      setTutorMessages([INITIAL_TUTOR_MESSAGE]);
+      setTutorMessages([getInitialTutorGreeting(topic)]);
       setTutorError(null);
       setTutorInput("");
     };
@@ -187,10 +219,42 @@ export default function TopicLesson() {
     setCompletedIndices(getTopicCompletedLessons(topic, userId));
     setAnswers({});
     setCurrentQIdx(0);
-    setTutorMessages([INITIAL_TUTOR_MESSAGE]);
+    setTutorMessages([getInitialTutorGreeting(topic)]);
     setTutorError(null);
     setTutorInput("");
   }, [topic, activeLessonIdx, userId]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const search = new URLSearchParams(window.location.search);
+      const modeParam = search.get("mode");
+      const promptParam = search.get("prompt");
+
+      if (modeParam === "tutor" || !isPredefined) {
+        setActiveMode("tutor");
+        setTimeout(() => {
+          document.getElementById("ai-tutor-container")?.scrollIntoView({ behavior: "smooth" });
+        }, 200);
+      }
+
+      if (promptParam && promptParam.trim()) {
+        const text = promptParam.trim();
+        const baseGreeting = getInitialTutorGreeting(topic);
+        setTutorMessages([
+          baseGreeting,
+          { role: "user", content: text },
+        ]);
+        tutorMutation.mutate({
+          topic,
+          lessonTitle: activeLesson?.title || topic,
+          lessonContent: `${activeLesson?.intro || ""} ${activeLesson?.explanation || ""}`,
+          currentMode: "tutor",
+          conversation: [],
+          message: text,
+        });
+      }
+    }
+  }, [topic, isPredefined]);
 
   useEffect(() => {
     if (activeMode === "tutor") {
@@ -255,7 +319,7 @@ export default function TopicLesson() {
       ? Math.round((completedLessonsCount / totalLessonsCount) * 100)
       : 0;
 
-  if (!isSubjectSelected(curriculum.subject))
+  if (isPredefined && !isSubjectSelected(curriculum.subject))
     return (
       <DashboardLayout allowGuest>
         <div className="min-h-screen bg-[#f6fbfd] p-8 text-[#214554]">
@@ -534,12 +598,51 @@ export default function TopicLesson() {
     <DashboardLayout allowGuest>
       <div className="min-h-screen bg-[#f6fbfd] text-[#214554]">
         <main className="mx-auto max-w-[1100px] px-5 py-8 sm:px-8 lg:px-10">
-          <button
-            onClick={() => setLocation("/dashboard")}
-            className="flex items-center gap-2 text-sm font-bold text-[#159ac1] transition hover:text-[#0e7795]"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back to dashboard
-          </button>
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <button
+              onClick={() => setLocation("/dashboard")}
+              className="flex items-center gap-2 text-sm font-bold text-[#159ac1] transition hover:text-[#0e7795]"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back to dashboard
+            </button>
+            <DyslexiaFontToggle />
+          </div>
+
+          {!isPredefined && (
+            <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-[#bde9f3] bg-[#e8f8fc] p-4 text-[#1d596b] shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-[#159ac1] shadow-xs">
+                  <Bot className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-[#159ac1] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                      AI Tutor Custom Topic
+                    </span>
+                    <span className="text-xs font-semibold text-[#528795]">Not in standard curriculum</span>
+                  </div>
+                  <h2 className="mt-1 text-base font-bold text-[#173c4b]">
+                    Learning “{topic}” with Neura AI Tutor
+                  </h2>
+                  <p className="mt-0.5 text-xs text-[#5e818d] leading-relaxed">
+                    This topic is not part of the standard curriculum. Neura's AI Tutor has crafted this 12-lesson study path for you and is ready to teach you every step.
+                  </p>
+                </div>
+              </div>
+              {activeMode !== "tutor" && (
+                <button
+                  onClick={() => {
+                    setActiveMode("tutor");
+                    document.getElementById("ai-tutor-container")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="shrink-0 rounded-xl bg-[#159ac1] px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#1088aa] transition"
+                >
+                  Open AI Tutor →
+                </button>
+              )}
+            </div>
+          )}
+
           <div className="mt-7 flex flex-col justify-between gap-5 md:flex-row md:items-end">
             <div>
               <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#e8f8fc] px-3 py-1.5 text-xs font-bold text-[#159ac1]">

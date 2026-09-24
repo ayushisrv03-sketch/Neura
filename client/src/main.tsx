@@ -6,7 +6,13 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import { startLogin } from "./const";
+import "@fontsource/opendyslexic";
+import "@fontsource/opendyslexic/700.css";
 import "./index.css";
+import { applyStoredDyslexiaFont } from "@/hooks/useLearningPreferences";
+
+// Initialize dyslexia-friendly font preference from localStorage before rendering
+applyStoredDyslexiaFont();
 
 const queryClient = new QueryClient();
 

@@ -28,11 +28,10 @@ const stepTitles = ['Getting to know you', 'Exploration', 'Preferences', 'Pace &
 export default function OnboardingPage() {
   const [, setLocation] = useLocation()
   const { user } = useAuth()
-  const { selectedSubjects, setSelectedSubjects, subjectSummary, selectedFormats, setSelectedFormats } = useLearningPreferences()
+  const { selectedSubjects, setSelectedSubjects, subjectSummary, selectedFormats, setSelectedFormats, dyslexiaFont, setDyslexiaFont } = useLearningPreferences()
   const [step, setStep] = useState(1)
   const [name, setName] = useState('')
   const [calmMode, setCalmMode] = useState(false)
-  const [dyslexiaFont, setDyslexiaFont] = useState(false)
   const [pace, setPace] = useState('Normal (~20–30 min)')
   const [subjectNotice, setSubjectNotice] = useState<string | null>(null)
 
@@ -74,7 +73,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main className={`min-h-screen bg-[#faf8ff] text-[#131b2e] antialiased transition-colors ${calmMode ? 'saturate-[.85] bg-[#f7f9f8]' : ''} ${dyslexiaFont ? 'font-[Open-Dyslexic]' : ''}`}>
+    <main className={`min-h-screen bg-[#faf8ff] text-[#131b2e] antialiased transition-colors ${calmMode ? 'saturate-[.85] bg-[#f7f9f8]' : ''} ${dyslexiaFont ? 'dyslexia-font' : ''}`}>
       <header className="sticky top-0 z-50 border-b border-[#e2e7ff]/70 bg-[#faf8ff]/90 backdrop-blur-md">
         <div className="mx-auto flex h-20 max-w-5xl items-center justify-between gap-4 px-4 sm:px-8">
           <span className="flex shrink-0 items-center gap-3 rounded-lg p-1 text-[#0284c7]">
@@ -83,7 +82,7 @@ export default function OnboardingPage() {
           </span>
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <button type="button" onClick={() => setCalmMode((value) => !value)} className={`rounded-full px-3.5 py-2 text-sm font-medium transition ${calmMode ? 'bg-sky-100 text-sky-700' : 'bg-[#f2f3ff] text-[#40474f] hover:bg-[#e2e7ff]'}`}>☁ <span className="hidden md:inline">Calm Canvas</span></button>
-            <button type="button" onClick={() => setDyslexiaFont((value) => !value)} className={`rounded-full px-3.5 py-2 text-sm font-medium transition ${dyslexiaFont ? 'bg-sky-100 text-sky-700' : 'bg-[#f2f3ff] text-[#40474f] hover:bg-[#e2e7ff]'}`}>Tᵀ <span className="hidden md:inline">Dyslexia Font</span></button>
+            <button type="button" onClick={() => setDyslexiaFont((value) => !value)} aria-pressed={dyslexiaFont} className={`rounded-full px-3.5 py-2 text-sm font-medium transition ${dyslexiaFont ? 'bg-sky-100 text-sky-700' : 'bg-[#f2f3ff] text-[#40474f] hover:bg-[#e2e7ff]'}`}>Tᵀ <span className="hidden md:inline">Dyslexia Font</span></button>
             <span className="hidden h-5 w-px bg-[#c0c7d1]/50 sm:block" />
             <button type="button" onClick={handleFinish} className="rounded-lg px-2.5 py-1.5 text-xs text-[#40474f] transition hover:text-sky-600 sm:text-sm">Exit &amp; Save</button>
           </div>

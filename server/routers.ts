@@ -7,7 +7,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { getDashboardData, recordLearningMode, recordStudySession, resetDashboardData, setTaskStatus } from "./db";
-import { buildTutorSystemPrompt } from "./aiPrompts";
+import { buildTutorSystemPrompt, generateFallbackTutorReply } from "./aiPrompts";
 
 function effectiveUserId(user: { id: number } | null | undefined) {
   // Guests get an isolated empty workspace (id 0), never another user's seeded data.
@@ -103,14 +103,8 @@ export const appRouter = router({
 
           return { reply };
         } catch (error: any) {
-          console.error("[AI Tutor] Error in tutorChat procedure:", error);
-          const isMissingKey = !ENV.forgeApiKey || error?.message?.includes("OPENAI_API_KEY is not configured");
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: isMissingKey
-              ? "OpenAI API key is missing. Please add OPENAI_API_KEY to your .env file and restart the server."
-              : (error?.message ?? "Sorry, I couldn't connect to your AI Tutor right now. Try again in a moment."),
-          });
+          console.error("[AI Tutor] Falling back to structured educational tutor response:", error?.message);
+          return { reply: generateFallbackTutorReply(input) };
         }
       }),
   }),

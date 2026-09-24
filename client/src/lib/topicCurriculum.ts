@@ -1160,3 +1160,51 @@ export const lessons = Object.fromEntries(
     },
   ])
 );
+
+export function isPredefinedTopic(topicName?: string | null): boolean {
+  if (!topicName) return false;
+  const normalized = topicName.trim().toLowerCase();
+  return Object.keys(TOPIC_CURRICULA).some(
+    (k) => k.toLowerCase() === normalized
+  );
+}
+
+export function getExactPredefinedTopicName(topicName?: string | null): string | null {
+  if (!topicName) return null;
+  const normalized = topicName.trim().toLowerCase();
+  const match = Object.keys(TOPIC_CURRICULA).find(
+    (k) => k.toLowerCase() === normalized
+  );
+  return match ?? null;
+}
+
+export interface PredefinedLessonItem {
+  id: number;
+  lessonNumber: number;
+  lessonIndex: number;
+  title: string;
+  topic: string;
+  subject: string;
+  level: string;
+  intro: string;
+}
+
+export function getAllPredefinedLessons(): PredefinedLessonItem[] {
+  const items: PredefinedLessonItem[] = [];
+  for (const [topicName, curr] of Object.entries(TOPIC_CURRICULA)) {
+    curr.lessons.forEach((lesson, idx) => {
+      items.push({
+        id: lesson.id,
+        lessonNumber: idx + 1,
+        lessonIndex: idx,
+        title: lesson.title,
+        topic: topicName,
+        subject: curr.subject,
+        level: curr.level,
+        intro: lesson.intro,
+      });
+    });
+  }
+  return items;
+}
+

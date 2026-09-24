@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { User } from "lucide-react";
+import { DyslexiaFontToggle } from "@/components/DyslexiaFontToggle";
 
 // In-page section anchors (each id exists on this same landing page) stay as
 // plain <a> tags so the browser's native hash-scroll behavior applies.
@@ -37,7 +38,8 @@ export function SiteHeader() {
             ))}
           </nav>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <DyslexiaFontToggle />
           <Link
             href="/login"
             className="hidden p-2 font-heading text-sm font-medium text-slate-700 transition-colors hover:text-sky-600 sm:inline-block"

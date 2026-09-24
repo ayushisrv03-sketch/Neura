@@ -1,3 +1,47 @@
+/* OpenDyslexic Font Faces */
+@font-face {
+  font-family: 'OpenDyslexic';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('OpenDyslexic'),
+       local('OpenDyslexic Regular'),
+       local('Open-Dyslexic'),
+       url('/fonts/opendyslexic-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'OpenDyslexic';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('OpenDyslexic Bold'),
+       local('OpenDyslexic-Bold'),
+       local('Open-Dyslexic-Bold'),
+       url('/fonts/opendyslexic-latin-700-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'OpenDyslexic';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('OpenDyslexic Italic'),
+       local('OpenDyslexic-Italic'),
+       local('Open-Dyslexic-Italic'),
+       url('/fonts/opendyslexic-latin-400-italic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'OpenDyslexic';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: local('OpenDyslexic BoldItalic'),
+       local('OpenDyslexic-BoldItalic'),
+       url('/fonts/opendyslexic-latin-700-italic.woff2') format('woff2');
+}
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -94,17 +138,176 @@
    name but the original project never defined it — restored here). */
 .shadow-calm { box-shadow: 0 20px 45px -12px rgba(21, 60, 90, 0.16); }
 
-/* Dyslexia-friendly reading mode, toggled from the login/signup page. Also
-   never defined in the original project; OpenDyslexic isn't reliably
-   available without bundling font files, so this uses a widely-recommended
-   substitute (increased size/spacing + a rounder, more open sans-serif) that
-   the WebAIM and British Dyslexia Association guidance both call out as
-   more legible for dyslexic readers than the default body font. */
-.dyslexia-mode, .dyslexia-mode * {
-  font-family: "Comic Sans MS", "Comic Sans", Verdana, Tahoma, sans-serif !important;
-  letter-spacing: 0.02em !important;
-  line-height: 1.7 !important;
-  word-spacing: 0.05em !important;
+/* Dyslexia-Friendly Reading Mode (OpenDyslexic) */
+html.dyslexia-font {
+  font-size: 89%; /* Calibrates OpenDyslexic's large x-height down to match standard UI typography */
+}
+
+/* Set CSS font variables for Tailwind and components */
+html.dyslexia-font,
+body.dyslexia-font,
+.dyslexia-font,
+.dyslexia-mode {
+  --font-sans: "OpenDyslexic", "Open-Dyslexic", opendyslexic, sans-serif !important;
+  --font-heading: "OpenDyslexic", "Open-Dyslexic", opendyslexic, sans-serif !important;
+  --font-body: "OpenDyslexic", "Open-Dyslexic", opendyslexic, sans-serif !important;
+  --font-lexend: "OpenDyslexic", "Open-Dyslexic", opendyslexic, sans-serif !important;
+  --font-atkinson: "OpenDyslexic", "Open-Dyslexic", opendyslexic, sans-serif !important;
+  font-family: "OpenDyslexic", "Open-Dyslexic", opendyslexic, sans-serif !important;
+  letter-spacing: 0.015em;
+  word-spacing: 0.035em;
+  line-height: 1.62;
+}
+
+/* Apply OpenDyslexic directly to all text elements in dyslexia mode */
+html.dyslexia-font body,
+body.dyslexia-font,
+.dyslexia-font,
+.dyslexia-font p,
+.dyslexia-font span,
+.dyslexia-font h1,
+.dyslexia-font h2,
+.dyslexia-font h3,
+.dyslexia-font h4,
+.dyslexia-font h5,
+.dyslexia-font h6,
+.dyslexia-font a,
+.dyslexia-font button,
+.dyslexia-font input,
+.dyslexia-font select,
+.dyslexia-font textarea,
+.dyslexia-font label,
+.dyslexia-font strong,
+.dyslexia-font b,
+.dyslexia-font em,
+.dyslexia-font i,
+.dyslexia-font small,
+.dyslexia-font li,
+.dyslexia-font div,
+.dyslexia-mode,
+.dyslexia-mode p,
+.dyslexia-mode span,
+.dyslexia-mode h1,
+.dyslexia-mode h2,
+.dyslexia-mode h3,
+.dyslexia-mode h4,
+.dyslexia-mode h5,
+.dyslexia-mode h6,
+.dyslexia-mode a,
+.dyslexia-mode button,
+.dyslexia-mode input,
+.dyslexia-mode select,
+.dyslexia-mode textarea,
+.dyslexia-mode label,
+.dyslexia-mode strong,
+.dyslexia-mode b,
+.dyslexia-mode em,
+.dyslexia-mode i,
+.dyslexia-mode small,
+.dyslexia-mode li,
+.dyslexia-mode div {
+  font-family: "OpenDyslexic", "Open-Dyslexic", opendyslexic, sans-serif !important;
+}
+
+/* Proportional heading sizes and adequate spacing for OpenDyslexic */
+.dyslexia-font h1,
+.dyslexia-mode h1 {
+  font-size: 0.9em;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+}
+
+.dyslexia-font h2,
+.dyslexia-mode h2 {
+  font-size: 0.92em;
+  line-height: 1.38;
+  letter-spacing: 0.01em;
+}
+
+.dyslexia-font h3,
+.dyslexia-mode h3 {
+  font-size: 0.94em;
+  line-height: 1.42;
+  letter-spacing: 0.01em;
+}
+
+.dyslexia-font p,
+.dyslexia-mode p {
+  line-height: 1.68;
+  letter-spacing: 0.015em;
+  word-spacing: 0.035em;
+}
+
+/* Adequate spacing in lists and buttons */
+.dyslexia-font li,
+.dyslexia-mode li {
+  line-height: 1.65;
+  margin-bottom: 0.35rem;
+}
+
+.dyslexia-font button,
+.dyslexia-mode button,
+.dyslexia-font input,
+.dyslexia-mode input,
+.dyslexia-font textarea,
+.dyslexia-mode textarea {
+  letter-spacing: 0.015em;
+  word-spacing: 0.025em;
+}
+
+/* Strictly protect non-text elements: SVG icons, Lucide icons, code blocks */
+.dyslexia-font svg,
+.dyslexia-font svg *,
+.dyslexia-font [class*="lucide"],
+.dyslexia-font .lucide,
+.dyslexia-mode svg,
+.dyslexia-mode svg *,
+.dyslexia-mode [class*="lucide"],
+.dyslexia-mode .lucide {
+  font-family: inherit !important;
+}
+
+.dyslexia-font code,
+.dyslexia-font code *,
+.dyslexia-font pre,
+.dyslexia-font pre *,
+.dyslexia-font kbd,
+.dyslexia-mode code,
+.dyslexia-mode code *,
+.dyslexia-mode pre,
+.dyslexia-mode pre *,
+.dyslexia-mode kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+}
+
+.font-\[Open-Dyslexic\],
+.font-\[OpenDyslexic\] {
+  font-family: "OpenDyslexic", "Open-Dyslexic", opendyslexic, sans-serif !important;
+}
+
+/* Smooth transitions during font toggle */
+html {
+  transition: font-size 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+  transition: font-size 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              letter-spacing 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              word-spacing 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              line-height 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.25s ease,
+              color 0.25s ease;
+}
+
+.font-toggling,
+.font-toggling * {
+  transition: font-size 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              letter-spacing 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              word-spacing 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              line-height 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.2s ease,
+              border-color 0.2s ease,
+              color 0.2s ease !important;
 }
 
 * { box-sizing: border-box; }

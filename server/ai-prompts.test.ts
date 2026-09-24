@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildTutorSystemPrompt, DEFAULT_TUTOR_SYSTEM_PROMPT } from "./aiPrompts";
+import {
+  buildTutorSystemPrompt,
+  DEFAULT_TUTOR_SYSTEM_PROMPT,
+  generateFallbackTutorReply,
+} from "./aiPrompts";
 
 describe("AI Tutor System Prompts", () => {
   it("provides a valid default system prompt", () => {
@@ -39,4 +43,34 @@ describe("AI Tutor System Prompts", () => {
     expect(prompt).toContain("(Options: Moisture and warmth, Complete darkness, High nitrogen)");
     expect(prompt).toContain("NEVER give away the correct answer or choice directly");
   });
+
+  it("generates a structured educational reply for custom non-curriculum topics", () => {
+    const reply1 = generateFallbackTutorReply({
+      topic: "Quantum Computing",
+      lessonTitle: "Exploring Quantum Computing",
+      message: "Explain simply for a beginner",
+    });
+
+    expect(reply1).toContain("Understanding Quantum Computing Simply");
+    expect(reply1).toContain("Quantum Computing");
+
+    const reply2 = generateFallbackTutorReply({
+      topic: "Black Holes",
+      lessonTitle: "Exploring Black Holes",
+      message: "What are the 3 core principles?",
+    });
+
+    expect(reply2).toContain("3 Core Principles of Black Holes");
+    expect(reply2).toContain("Black Holes");
+
+    const reply3 = generateFallbackTutorReply({
+      topic: "Artificial Intelligence",
+      lessonTitle: "Exploring Artificial Intelligence",
+      message: "Give me a real-world example",
+    });
+
+    expect(reply3).toContain("Real-World Example of Artificial Intelligence");
+    expect(reply3).toContain("Artificial Intelligence");
+  });
 });
+

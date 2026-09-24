@@ -282,7 +282,79 @@ export function LessonVisualDispatcher({ topic, lessonIndex }: LessonVisualDispa
       }
 
     default:
-      return null;
+      return <CustomTopicVisual topic={topic} lessonIndex={lessonIndex} />;
   }
+}
+
+function CustomTopicVisual({ topic, lessonIndex }: { topic: string; lessonIndex: number }) {
+  const [activeStep, setActiveStep] = React.useState(0);
+  const steps = [
+    { title: "Core Principle", desc: `Explore foundational rules and concepts governing ${topic}.` },
+    { title: "Mechanism & Process", desc: `Understand cause-and-effect mechanisms operating within ${topic}.` },
+    { title: "Real-world Application", desc: `Connect theoretical knowledge of ${topic} to practical real-world scenarios.` },
+  ];
+
+  return (
+    <div className="rounded-2xl border border-[#dff0f4] bg-[#f8fdff] p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e5f1f4] pb-3">
+        <div>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[#159ac1]">
+            AI Tutor Dynamic Model
+          </span>
+          <h4 className="text-sm font-bold text-[#173c4b]">
+            Interactive Conceptual Exploration for {topic}
+          </h4>
+        </div>
+        <span className="rounded-full bg-[#e8f8fc] px-2.5 py-1 text-[11px] font-bold text-[#159ac1]">
+          Lesson {lessonIndex + 1}
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        {steps.map((step, idx) => (
+          <button
+            key={step.title}
+            onClick={() => setActiveStep(idx)}
+            className={`rounded-xl border p-3 text-left transition ${
+              activeStep === idx
+                ? "border-[#159ac1] bg-white shadow-sm ring-2 ring-[#dff5fa]"
+                : "border-[#e3eff2] bg-white/70 hover:border-[#bde3eb] hover:bg-white"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className={`text-[10px] font-bold uppercase tracking-wider ${activeStep === idx ? "text-[#159ac1]" : "text-[#8aa7b1]"}`}>
+                Phase {idx + 1}
+              </span>
+              {activeStep === idx && (
+                <span className="h-2 w-2 rounded-full bg-[#159ac1]" />
+              )}
+            </div>
+            <p className="mt-1 text-xs font-bold text-[#214554]">{step.title}</p>
+            <p className="mt-1 text-[11px] text-[#6e8c97] leading-relaxed">{step.desc}</p>
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-4 rounded-xl bg-white p-4 border border-[#e5f1f4] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold text-[#173c4b]">
+            Active Phase: {steps[activeStep].title}
+          </p>
+          <p className="mt-0.5 text-xs text-[#6e8c97]">
+            {steps[activeStep].desc} Use your AI Tutor to ask questions about this specific phase.
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            const container = document.getElementById("ai-tutor-container");
+            container?.scrollIntoView({ behavior: "smooth" });
+          }}
+          className="shrink-0 rounded-xl bg-[#159ac1] px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#1088aa] transition"
+        >
+          Ask AI Tutor →
+        </button>
+      </div>
+    </div>
+  );
 }
 

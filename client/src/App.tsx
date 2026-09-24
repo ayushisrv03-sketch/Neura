@@ -5,10 +5,12 @@ import Landing from "@/pages/Landing";
 import NotFound from "@/pages/NotFound";
 import Onboarding from "@/pages/Onboarding";
 import { Route, Switch } from "wouter";
+import { useDyslexiaFont } from "./hooks/useLearningPreferences";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import TopicLesson from "./pages/TopicLesson";
+import AITutorPage from "./pages/AITutorPage";
 
 // Public marketing/auth routes live at the top level. Everything under
 // /dashboard is the authenticated app: <DashboardLayout> (rendered inside
@@ -24,6 +26,8 @@ function Router() {
       <Route path={"/signup"} component={() => <AuthPage defaultTab="signup" />} />
       <Route path={"/onboarding"} component={Onboarding} />
       <Route path={"/dashboard"} component={Home} />
+      <Route path={"/dashboard/tutor/:topic"} component={AITutorPage} />
+      <Route path={"/dashboard/tutor"} component={AITutorPage} />
       <Route path={"/dashboard/lessons/:topic"} component={TopicLesson} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
@@ -38,6 +42,8 @@ function Router() {
 // - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
 function App() {
+  useDyslexiaFont();
+
   return (
     <ErrorBoundary>
       <ThemeProvider
