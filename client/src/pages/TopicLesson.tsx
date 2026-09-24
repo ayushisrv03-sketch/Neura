@@ -280,6 +280,24 @@ export default function TopicLesson() {
     ([idx, ans]) => lessonQuestions[Number(idx)]?.answer === ans
   ).length;
 
+  const isLastQuestion = lessonQuestions.length > 0 && currentQIdx === lessonQuestions.length - 1;
+  const isCurrentAnswered = Boolean(answers[currentQIdx]);
+  const allQuestionsAnswered =
+    lessonQuestions.length > 0 && lessonQuestions.every((_, idx) => Boolean(answers[idx]));
+  const canGoNext = isCurrentAnswered || isLessonCompleted;
+
+  const handleNextQuestion = () => {
+    if (currentQIdx < lessonQuestions.length - 1) {
+      setCurrentQIdx((prev) => prev + 1);
+    }
+  };
+
+  const handlePrevQuestion = () => {
+    if (currentQIdx > 0) {
+      setCurrentQIdx((prev) => prev - 1);
+    }
+  };
+
   const course = useMemo(() => data?.courses.find((item) => item.title === topic), [data, topic]);
 
   const furtherLessons = useMemo(() => {
@@ -902,24 +920,81 @@ export default function TopicLesson() {
                       : `Not quite. Correct answer: ${activeQ?.answer}`}
                   </p>
                 )}
+
+                {/* Question Navigation & Lesson Completion */}
+                <div className="mt-6 flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-[#f0f7f9]">
+                  {currentQIdx > 0 && (
+                    <button
+                      type="button"
+                      onClick={handlePrevQuestion}
+                      className="flex h-12 w-full sm:w-auto sm:min-w-[160px] items-center justify-center gap-2 rounded-xl border border-[#dfeef1] bg-white px-5 text-sm font-bold text-[#426b78] transition hover:bg-[#f2f9fb] hover:border-[#159ac1]/40"
+                    >
+                      <ArrowLeft className="h-4 w-4" /> Previous question
+                    </button>
+                  )}
+
+                  {!isLastQuestion ? (
+                    <button
+                      type="button"
+                      onClick={handleNextQuestion}
+                      disabled={!canGoNext}
+                      className={`flex h-12 flex-1 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold transition shadow-xs ${
+                        canGoNext
+                          ? "bg-[#159ac1] text-white hover:bg-[#1088aa] cursor-pointer"
+                          : "bg-[#e5eff2] text-[#8aa7b1] cursor-not-allowed border border-[#d6e7ec]"
+                      }`}
+                    >
+                      Next question <ArrowRight className="h-4 w-4" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={completeLesson}
+                      disabled={isLessonCompleted || !isCurrentAnswered || !allQuestionsAnswered}
+                      className={`flex h-12 flex-1 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold transition shadow-xs ${
+                        isLessonCompleted
+                          ? "bg-[#67c9a0] text-white cursor-default"
+                          : isCurrentAnswered && allQuestionsAnswered
+                            ? "bg-[#159ac1] text-white hover:bg-[#1088aa] cursor-pointer"
+                            : "bg-[#e5eff2] text-[#8aa7b1] cursor-not-allowed border border-[#d6e7ec]"
+                      }`}
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      {isLessonCompleted
+                        ? `Lesson ${activeLessonIdx + 1} completed (+15 min logged)`
+                        : !allQuestionsAnswered
+                          ? `Answer all questions to complete (${answeredCount}/${lessonQuestions.length})`
+                          : "Mark lesson complete"}
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <button
-                onClick={completeLesson}
-                disabled={isLessonCompleted}
-                className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#159ac1] text-sm font-bold text-white transition hover:bg-[#1088aa] disabled:cursor-default disabled:bg-[#67c9a0]"
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                {isLessonCompleted
-                  ? `Lesson ${activeLessonIdx + 1} completed (+15 min logged)`
-                  : `Mark Lesson ${activeLessonIdx + 1} complete`}
-              </button>
-              {isLessonCompleted && nextTopic && (
+              {isLessonCompleted && !isLastLesson && (
                 <button
-                  onClick={() => setLocation(`/dashboard/lessons/${encodeURIComponent(nextTopic.title)}`)}
-                  className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#159ac1] bg-[#e8f8fc] text-sm font-bold text-[#159ac1] transition hover:bg-[#d4f2f8]"
+                  type="button"
+                  onClick={() => {
+                    const nextIdx = activeLessonIdx + 1;
+                    setActiveLessonIdx(nextIdx);
+                    const search = new URLSearchParams(window.location.search);
+                    search.set("lesson", (nextIdx + 1).toString());
+                    const newUrl = `${window.location.pathname}?${search.toString()}`;
+                    window.history.pushState({}, "", newUrl);
+                    window.dispatchEvent(new Event("popstate"));
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#159ac1] bg-[#e8f8fc] text-sm font-bold text-[#159ac1] transition hover:bg-[#d4f2f8]"
                 >
-                  Continue to next lesson: {nextTopic.title} <ArrowRight className="h-4 w-4" />
+                  Continue to next lesson: Lesson {activeLessonIdx + 2} <ArrowRight className="h-4 w-4" />
+                </button>
+              )}
+              {isLessonCompleted && isLastLesson && nextTopic && (
+                <button
+                  type="button"
+                  onClick={() => setLocation(`/dashboard/lessons/${encodeURIComponent(nextTopic.title)}`)}
+                  className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#159ac1] bg-[#e8f8fc] text-sm font-bold text-[#159ac1] transition hover:bg-[#d4f2f8]"
+                >
+                  Continue to next topic: {nextTopic.title} <ArrowRight className="h-4 w-4" />
                 </button>
               )}
             </article>

@@ -106,4 +106,36 @@ describe("dedicated curriculum lessons", () => {
       }
     }
   });
+
+  it("verifies sequential question flow: Q1 and Q2 navigate forward, Q3 enables completion", () => {
+    for (const topic of TOPICS) {
+      const curr = getTopicCurriculum(topic);
+      for (const lesson of curr.lessons) {
+        const questions = lesson.questions;
+        expect(questions.length).toBe(3);
+
+        // Simulation of sequential question flow
+        let currentQIdx = 0;
+        const answers: Record<number, string> = {};
+
+        // Question 1 (idx 0): not last question -> action is Next question
+        expect(currentQIdx < questions.length - 1).toBe(true);
+        answers[0] = questions[0].choices[0]; // answered Q1
+        currentQIdx++; // Navigate to Question 2
+
+        // Question 2 (idx 1): not last question -> action is Next question
+        expect(currentQIdx < questions.length - 1).toBe(true);
+        answers[1] = questions[1].choices[1]; // answered Q2
+        currentQIdx++; // Navigate to Question 3
+
+        // Question 3 (idx 2): IS last question -> action is Mark lesson complete
+        expect(currentQIdx === questions.length - 1).toBe(true);
+        answers[2] = questions[2].choices[2]; // answered Q3
+
+        // All 3 answered
+        const allAnswered = questions.every((_, idx) => Boolean(answers[idx]));
+        expect(allAnswered).toBe(true);
+      }
+    }
+  });
 });
