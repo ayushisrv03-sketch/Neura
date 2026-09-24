@@ -75,10 +75,10 @@ const seedDate = new Date();
 export const demoCourses = [
   { title: "Fractions", subject: "Maths", level: "Grade 7", progress: 0, lessonsCompleted: 0, lessonsTotal: 12, nextLesson: "Equivalent fractions", accent: "sky", icon: "fraction" },
   { title: "Linear equations", subject: "Maths", level: "Grade 7", progress: 0, lessonsCompleted: 0, lessonsTotal: 12, nextLesson: "Solving one-step equations", accent: "mint", icon: "equation" },
-  { title: "Geometry", subject: "Maths", level: "Grade 7", progress: 0, lessonsCompleted: 0, lessonsTotal: 14, nextLesson: "Angles and triangles", accent: "lilac", icon: "geometry" },
-  { title: "Photosynthesis", subject: "Science", level: "Grade 6", progress: 0, lessonsCompleted: 0, lessonsTotal: 11, nextLesson: "The role of sunlight", accent: "green", icon: "leaf" },
-  { title: "States of matter", subject: "Science", level: "Grade 6", progress: 0, lessonsCompleted: 0, lessonsTotal: 11, nextLesson: "Particles in motion", accent: "orange", icon: "matter" },
-  { title: "Parts of a plant", subject: "Science", level: "Grade 5", progress: 0, lessonsCompleted: 0, lessonsTotal: 11, nextLesson: "Roots and their jobs", accent: "yellow", icon: "plant" },
+  { title: "Geometry", subject: "Maths", level: "Grade 7", progress: 0, lessonsCompleted: 0, lessonsTotal: 12, nextLesson: "Angles and triangles", accent: "lilac", icon: "geometry" },
+  { title: "Photosynthesis", subject: "Science", level: "Grade 6", progress: 0, lessonsCompleted: 0, lessonsTotal: 12, nextLesson: "The role of sunlight", accent: "green", icon: "leaf" },
+  { title: "States of matter", subject: "Science", level: "Grade 6", progress: 0, lessonsCompleted: 0, lessonsTotal: 12, nextLesson: "Particles in motion", accent: "orange", icon: "matter" },
+  { title: "Parts of a plant", subject: "Science", level: "Grade 5", progress: 0, lessonsCompleted: 0, lessonsTotal: 12, nextLesson: "Roots and their jobs", accent: "yellow", icon: "plant" },
 ] as const;
 
 export const demoTasks = [

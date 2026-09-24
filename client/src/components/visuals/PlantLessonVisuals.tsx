@@ -160,3 +160,54 @@ export function GrowthCycleVisual() {
     </div>
   );
 }
+
+// Lesson 12: Pollination & Seed Dispersal
+export function PollinationVisual() {
+  const [vector, setVector] = useState<"bee" | "wind">("bee");
+
+  return (
+    <div className="rounded-2xl border border-[#dff0f4] bg-[#f7fcfe] p-5 shadow-xs text-[#214554]">
+      <div className="flex items-center justify-between border-b border-[#e1f0f4] pb-3">
+        <div>
+          <h4 className="text-sm font-bold text-[#1d596b]">Lesson 12 Visual: Pollination Vector Comparison</h4>
+          <p className="text-xs text-[#73949f]">Transferring pollen grains from anther to sticky stigma for fertilization.</p>
+        </div>
+        <span className="rounded-lg bg-[#e8f8fc] px-3 py-1 text-xs font-bold text-[#159ac1] capitalize">
+          Vector: {vector === "bee" ? "Insect (Bee)" : "Wind Draft"}
+        </span>
+      </div>
+
+      <div className="mt-5 flex flex-col items-center rounded-xl bg-white p-6 border border-[#e3f1f4]">
+        <div className="rounded-xl bg-[#f0fafc] p-4 text-center border border-[#d2edf3] max-w-sm w-full">
+          {vector === "bee" ? (
+            <div>
+              <span className="text-sm font-bold text-[#159ac1]">🐝 Insect Pollination: Colorful Petals & Nectar</span>
+              <p className="text-xs text-[#5e8a97] mt-1">Sticky pollen grains adhere to pollinator bodies and transfer to the stigma.</p>
+            </div>
+          ) : (
+            <div>
+              <span className="text-sm font-bold text-[#277f59]">💨 Wind Pollination: Feathery Stigmas</span>
+              <p className="text-xs text-[#5e8a97] mt-1">Lightweight microscopic pollen airborne across grasslands and cereal crops.</p>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={() => setVector("bee")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${vector === "bee" ? "bg-[#159ac1] text-white" : "bg-[#e8f8fc] text-[#159ac1]"}`}
+          >
+            Insect Pollination
+          </button>
+          <button
+            onClick={() => setVector("wind")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${vector === "wind" ? "bg-[#277f59] text-white" : "bg-[#eaf7f1] text-[#277f59]"}`}
+          >
+            Wind Pollination
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+

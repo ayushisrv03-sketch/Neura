@@ -195,3 +195,49 @@ export function WaterCyclePhaseVisual() {
     </div>
   );
 }
+
+// Lesson 12: Plasma & High-Energy States of Matter
+export function PlasmaHeatingCurveVisual() {
+  const [phase, setPhase] = useState<"solid" | "liquid" | "gas" | "plasma">("plasma");
+
+  return (
+    <div className="rounded-2xl border border-[#dff0f4] bg-[#f7fcfe] p-5 shadow-xs text-[#214554]">
+      <div className="flex items-center justify-between border-b border-[#e1f0f4] pb-3">
+        <div>
+          <h4 className="text-sm font-bold text-[#1d596b]">Lesson 12 Visual: Four States of Matter & Ionization</h4>
+          <p className="text-xs text-[#73949f]">Superheating gas strips electrons from nuclei to form ionized plasma.</p>
+        </div>
+        <span className="rounded-lg bg-[#e8f8fc] px-3 py-1 text-xs font-bold text-[#159ac1] uppercase">
+          State: {phase}
+        </span>
+      </div>
+
+      <div className="mt-5 flex flex-col items-center rounded-xl bg-white p-6 border border-[#e3f1f4]">
+        <div className="flex items-center justify-center h-28 w-full max-w-sm rounded-xl bg-[#0f172a] text-white p-4">
+          {phase === "solid" && <span className="text-sm font-bold text-sky-300">Solid: Tight orderly lattice vibrations</span>}
+          {phase === "liquid" && <span className="text-sm font-bold text-blue-300">Liquid: Particles slide past one another freely</span>}
+          {phase === "gas" && <span className="text-sm font-bold text-amber-300">Gas: High-speed independent collisions</span>}
+          {phase === "plasma" && (
+            <div className="text-center">
+              <span className="text-base font-extrabold text-violet-400">⚡ Ionized Plasma</span>
+              <p className="text-[11px] text-slate-300 mt-1">Free positive ions + decoupled high-energy electrons (Stars, Lightning)</p>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 flex flex-wrap justify-center gap-2">
+          {(["solid", "liquid", "gas", "plasma"] as const).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPhase(p)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition ${phase === p ? "bg-[#159ac1] text-white" : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"}`}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+

@@ -63,6 +63,7 @@ import {
   OxygenReleaseVisual,
   LimitingFactorsVisual,
   EcosystemEnergyVisual,
+  RespirationCycleVisual,
 } from "./PhotosynthesisLessonVisuals";
 
 import {
@@ -76,6 +77,7 @@ import {
   KineticEnergyVisual,
   GasPressureVolumeVisual,
   WaterCyclePhaseVisual,
+  PlasmaHeatingCurveVisual,
 } from "./MatterLessonVisuals";
 
 import {
@@ -89,6 +91,7 @@ import {
   PlantAdaptationsVisual,
   ErosionSoilVisual,
   GrowthCycleVisual,
+  PollinationVisual,
 } from "./PlantLessonVisuals";
 
 interface LessonVisualDispatcherProps {
@@ -184,10 +187,6 @@ export function LessonVisualDispatcher({ topic, lessonIndex }: LessonVisualDispa
           return <Net3DVisual />;
         case 11:
           return <VolumePrismsVisual />;
-        case 12:
-          return <SurfaceAreaVisual />;
-        case 13:
-          return <GeometricProblemVisual />;
         default:
           return <GeometryVisual />;
       }
@@ -216,6 +215,8 @@ export function LessonVisualDispatcher({ topic, lessonIndex }: LessonVisualDispa
           return <LimitingFactorsVisual />;
         case 10:
           return <EcosystemEnergyVisual />;
+        case 11:
+          return <RespirationCycleVisual />;
         default:
           return <PhotosynthesisVisual />;
       }
@@ -225,13 +226,13 @@ export function LessonVisualDispatcher({ topic, lessonIndex }: LessonVisualDispa
         case 0:
           return <AtomMatterVisual />;
         case 1:
-          return <SolidPropertiesVisual />;
-        case 2:
-          return <LiquidPropertiesVisual />;
-        case 3:
-          return <GasPropertiesVisual />;
-        case 4:
           return <StatesOfMatterVisual />; // Protected existing visual
+        case 2:
+          return <SolidPropertiesVisual />;
+        case 3:
+          return <LiquidPropertiesVisual />;
+        case 4:
+          return <GasPropertiesVisual />;
         case 5:
           return <MeltingFreezingVisual />;
         case 6:
@@ -243,6 +244,8 @@ export function LessonVisualDispatcher({ topic, lessonIndex }: LessonVisualDispa
         case 9:
           return <GasPressureVolumeVisual />;
         case 10:
+          return <PlasmaHeatingCurveVisual />;
+        case 11:
           return <WaterCyclePhaseVisual />;
         default:
           return <StatesOfMatterVisual />;
@@ -261,16 +264,18 @@ export function LessonVisualDispatcher({ topic, lessonIndex }: LessonVisualDispa
         case 4:
           return <FlowerDissectionVisual />;
         case 5:
-          return <SeedGerminationVisual />;
+          return <PollinationVisual />;
         case 6:
-          return <FruitOvaryVisual />;
+          return <SeedGerminationVisual />;
         case 7:
-          return <XylemPhloemVisual />;
+          return <FruitOvaryVisual />;
         case 8:
-          return <PlantAdaptationsVisual />;
+          return <XylemPhloemVisual />;
         case 9:
-          return <ErosionSoilVisual />;
+          return <PlantAdaptationsVisual />;
         case 10:
+          return <ErosionSoilVisual />;
+        case 11:
           return <GrowthCycleVisual />;
         default:
           return <PlantPartsVisual />;
@@ -280,3 +285,4 @@ export function LessonVisualDispatcher({ topic, lessonIndex }: LessonVisualDispa
       return null;
   }
 }
+

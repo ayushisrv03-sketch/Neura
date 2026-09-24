@@ -231,3 +231,52 @@ export function EcosystemEnergyVisual() {
     </div>
   );
 }
+
+// Lesson 12: Photosynthesis vs Cellular Respiration
+export function RespirationCycleVisual() {
+  const [mode, setMode] = useState<"day" | "night">("day");
+  return (
+    <div className="rounded-2xl border border-[#dff0f4] bg-[#f7fcfe] p-5 shadow-xs text-[#214554]">
+      <div className="flex items-center justify-between border-b border-[#e1f0f4] pb-3">
+        <div>
+          <h4 className="text-sm font-bold text-[#1d596b]">Lesson 12 Visual: Day vs Night Energy Cycle</h4>
+          <p className="text-xs text-[#73949f]">Photosynthesis creates glucose during day; respiration releases ATP day & night.</p>
+        </div>
+        <span className={`rounded-lg px-3 py-1 text-xs font-bold ${mode === "day" ? "bg-[#fff8e6] text-[#d97706]" : "bg-[#edf2f7] text-[#4a5568]"}`}>
+          {mode === "day" ? "Daytime (Photosynthesis > Respiration)" : "Nighttime (Respiration only)"}
+        </span>
+      </div>
+
+      <div className="mt-5 flex flex-col items-center rounded-xl bg-white p-6 border border-[#e3f1f4]">
+        <div className="grid grid-cols-2 gap-4 w-full max-w-md text-xs">
+          <div className="rounded-xl bg-[#eaf7f1] p-3 border border-[#bce8d4]">
+            <span className="font-bold text-[#277f59]">Photosynthesis (Chloroplasts)</span>
+            <p className="mt-1 text-[#456b57]">6 CO₂ + 6 H₂O + Light → C₆H₁₂O₆ + 6 O₂</p>
+            <p className="mt-1 font-semibold text-[#277f59]">{mode === "day" ? "Active (Making food & O₂)" : "Inactive (No sunlight)"}</p>
+          </div>
+          <div className="rounded-xl bg-[#e8f8fc] p-3 border border-[#bce3ed]">
+            <span className="font-bold text-[#159ac1]">Cellular Respiration (Mitochondria)</span>
+            <p className="mt-1 text-[#3b6370]">C₆H₁₂O₆ + 6 O₂ → 6 CO₂ + 6 H₂O + ATP</p>
+            <p className="mt-1 font-semibold text-[#159ac1]">Active (Continuous energy release)</p>
+          </div>
+        </div>
+
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={() => setMode("day")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold ${mode === "day" ? "bg-[#f59e0b] text-white" : "bg-[#fff8e6] text-[#d97706]"}`}
+          >
+            Daytime Conditions
+          </button>
+          <button
+            onClick={() => setMode("night")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold ${mode === "night" ? "bg-[#173c4b] text-white" : "bg-[#edf2f7] text-[#4a5568]"}`}
+          >
+            Nighttime Conditions
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
