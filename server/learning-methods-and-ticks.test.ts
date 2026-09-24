@@ -4,6 +4,12 @@ import {
   getTopicCompletedLessons,
   setTopicLessonCompleted,
 } from "../client/src/lib/topicCurriculum";
+import {
+  DEFAULT_FORMATS,
+  getStoredFormats,
+  setStoredFormats,
+  clearUserLearningPreferences,
+} from "../client/src/hooks/useLearningPreferences";
 
 describe("User-scoped lesson completion and ticks", () => {
   // Simple in-memory localStorage polyfill for node test environment
@@ -70,11 +76,9 @@ describe("Learning methods visibility logic based on onboarding selection", () =
     const showVisual = true; // Visual is always retained for every user
     const showSteps = userSelectedFormats.some(f => f.toLowerCase() === "step-by-step");
     const showExamples = userSelectedFormats.some(f => f.toLowerCase() === "examples");
-    const showSimple = userSelectedFormats.some(f => f.toLowerCase() === "text");
 
     expect(showVisual).toBe(true);
     expect(showExamples).toBe(true);
-    expect(showSimple).toBe(true);
     expect(showSteps).toBe(false); // Not selected -> hidden
   });
 
@@ -83,12 +87,10 @@ describe("Learning methods visibility logic based on onboarding selection", () =
     const showVisual = true; // Always retained
     const showSteps = userSelectedFormats.some(f => f.toLowerCase() === "step-by-step");
     const showExamples = userSelectedFormats.some(f => f.toLowerCase() === "examples");
-    const showSimple = userSelectedFormats.some(f => f.toLowerCase() === "text");
 
     expect(showVisual).toBe(true);
     expect(showSteps).toBe(true);
     expect(showExamples).toBe(false);
-    expect(showSimple).toBe(false);
   });
 
   it("supports Audio narration and Interactive model when selected in onboarding", () => {
@@ -104,3 +106,34 @@ describe("Learning methods visibility logic based on onboarding selection", () =
     expect(showSteps).toBe(false);
   });
 });
+
+describe("User-scoped learning formats memory isolation", () => {
+  it("defaults active formats to Text and Visual only", () => {
+    expect(DEFAULT_FORMATS).toEqual(["Text", "Visual"]);
+    const newFormats = getStoredFormats(555);
+    expect(newFormats).toEqual(["Text", "Visual"]);
+  });
+
+  it("does not leak previous user's saved formats into new user's preferences", () => {
+    const previousUserId = 101;
+    const newUserId = 102;
+
+    // Previous user customizes formats to Audio and Interactive
+    setStoredFormats(["Audio", "Interactive"], previousUserId);
+    expect(getStoredFormats(previousUserId)).toEqual(["Audio", "Interactive"]);
+
+    // Brand new user arrives -> must get only Text & Visual defaults, NOT previous user's formats
+    const newUserFormats = getStoredFormats(newUserId);
+    expect(newUserFormats).toEqual(["Text", "Visual"]);
+  });
+
+  it("clears user and guest preferences without affecting fresh defaults", () => {
+    const userId = 202;
+    setStoredFormats(["Examples", "Interactive"], userId);
+    expect(getStoredFormats(userId)).toEqual(["Examples", "Interactive"]);
+
+    clearUserLearningPreferences(userId);
+    expect(getStoredFormats(userId)).toEqual(["Text", "Visual"]);
+  });
+});
+

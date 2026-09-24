@@ -14,7 +14,6 @@ import { trpc } from "@/lib/trpc";
 import {
   ArrowLeft,
   ArrowRight,
-  BookOpen,
   Bot,
   CheckCircle2,
   Clock3,
@@ -26,8 +25,6 @@ import {
   Lightbulb,
   Loader2,
   Pause,
-  Play,
-  RotateCcw,
   Send,
   Sparkles,
   User,
@@ -57,7 +54,7 @@ export default function TopicLesson() {
   const { user } = useAuth();
   const userId = user?.id || user?.openId || user?.email;
 
-  const { selectedSubjects, setSelectedSubjects, isSubjectSelected, subjectSummary, selectedFormats } = useLearningPreferences();
+  const { selectedSubjects, setSelectedSubjects, isSubjectSelected, subjectSummary, selectedFormats } = useLearningPreferences(userId);
 
   // Learning methods visibility:
   // 1. Show visually is kept for EVERY user regardless of onboarding selection
@@ -65,7 +62,6 @@ export default function TopicLesson() {
   // 2. Other methods are shown ONLY if selected during onboarding
   const showSteps = selectedFormats.some((f) => f.toLowerCase() === "step-by-step" || f.toLowerCase() === "step by step");
   const showExamples = selectedFormats.some((f) => f.toLowerCase() === "examples" || f.toLowerCase() === "example");
-  const showSimple = selectedFormats.some((f) => f.toLowerCase() === "text");
   const showAudio = selectedFormats.some((f) => f.toLowerCase() === "audio");
   const showInteractive = selectedFormats.some((f) => f.toLowerCase() === "interactive");
 
@@ -110,6 +106,7 @@ export default function TopicLesson() {
   };
 
   const [activeMode, setActiveMode] = useState<
+<<<<<<< HEAD
     "steps" | "visual" | "example" | "simple" | "audio" | "hint" | "stuck" | "tutor"
   >(() => {
     if (typeof window !== "undefined") {
@@ -120,6 +117,10 @@ export default function TopicLesson() {
     if (!isPredefinedTopic(topic)) return "tutor";
     return "visual";
   });
+=======
+    "steps" | "visual" | "example" | "audio" | "hint" | "stuck" | "tutor"
+  >("visual");
+>>>>>>> origin/lessons
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [currentQIdx, setCurrentQIdx] = useState<number>(0);
   const [tutorMessages, setTutorMessages] = useState<TutorMessage[]>([
@@ -163,9 +164,8 @@ export default function TopicLesson() {
   useEffect(() => {
     if (activeMode === "steps" && !showSteps) setActiveMode("visual");
     if (activeMode === "example" && !showExamples) setActiveMode("visual");
-    if (activeMode === "simple" && !showSimple) setActiveMode("visual");
     if (activeMode === "audio" && !showAudio) setActiveMode("visual");
-  }, [activeMode, showSteps, showExamples, showSimple, showAudio]);
+  }, [activeMode, showSteps, showExamples, showAudio]);
 
   const tutorMutation = trpc.ai.tutorChat.useMutation({
     onSuccess: (res) => {
@@ -448,8 +448,6 @@ export default function TopicLesson() {
         </p>
         <p className="mt-3 text-sm text-[#5e7d87]">{activeLesson.activity}</p>
       </div>
-    ) : activeMode === "simple" ? (
-      <p className="text-sm text-[#5e7d87]">{activeLesson.explanation.split(".")[0]}.</p>
     ) : activeMode === "audio" ? (
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -597,6 +595,7 @@ export default function TopicLesson() {
   return (
     <DashboardLayout allowGuest>
       <div className="min-h-screen bg-[#f6fbfd] text-[#214554]">
+<<<<<<< HEAD
         <main className="mx-auto max-w-[1100px] px-5 py-8 sm:px-8 lg:px-10">
           <div className="flex items-center justify-between gap-3 mb-2">
             <button
@@ -643,6 +642,15 @@ export default function TopicLesson() {
             </div>
           )}
 
+=======
+        <main className="mx-auto max-w-[1300px] px-4 py-8 sm:px-6 lg:px-8">
+          <button
+            onClick={() => setLocation("/dashboard")}
+            className="flex items-center gap-2 text-sm font-bold text-[#159ac1] transition hover:text-[#0e7795]"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to dashboard
+          </button>
+>>>>>>> origin/lessons
           <div className="mt-7 flex flex-col justify-between gap-5 md:flex-row md:items-end">
             <div>
               <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#e8f8fc] px-3 py-1.5 text-xs font-bold text-[#159ac1]">
@@ -670,8 +678,8 @@ export default function TopicLesson() {
             </div>
           </div>
 
-          <section className="mt-7 grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
-            <article className="rounded-2xl border border-[#dff0f4] bg-white p-6 shadow-[0_10px_35px_rgba(27,91,109,0.04)] sm:p-8">
+          <section className="mt-7">
+            <article className="w-full rounded-2xl border border-[#dff0f4] bg-white p-6 shadow-[0_10px_35px_rgba(27,91,109,0.04)] sm:p-8 lg:p-10">
               <div className="flex items-center justify-between border-b border-[#f0f7f9] pb-4">
                 <div className="flex items-center gap-2 text-xs font-bold text-[#8aa7b1]">
                   <Clock3 className="h-4 w-4" /> 15 minute lesson
@@ -739,19 +747,6 @@ export default function TopicLesson() {
                         }`}
                     >
                       <Lightbulb className="mr-1 inline h-3.5 w-3.5" /> Show an example
-                    </button>
-                  )}
-
-                  {/* Explain simply - only if selected in onboarding */}
-                  {showSimple && (
-                    <button
-                      onClick={() => setActiveMode("simple")}
-                      className={`rounded-full px-3 py-2 text-xs font-semibold transition ${activeMode === "simple"
-                        ? "bg-[#159ac1] text-white"
-                        : "bg-[#e8f8fc] text-[#159ac1] hover:bg-[#d7f2f7]"
-                        }`}
-                    >
-                      <BookOpenIcon /> Explain simply
                     </button>
                   )}
 
@@ -824,15 +819,13 @@ export default function TopicLesson() {
                           ? "Step-by-step explanation"
                           : activeMode === "example"
                             ? "Example learning"
-                            : activeMode === "simple"
-                              ? "Simpler explanation"
-                              : activeMode === "audio"
-                                ? "Audio narration"
-                                : activeMode === "hint"
-                                  ? "A gentle hint"
-                                  : activeMode === "stuck"
-                                    ? "You are not alone"
-                                    : "Neura AI Tutor"}
+                            : activeMode === "audio"
+                              ? "Audio narration"
+                              : activeMode === "hint"
+                                ? "A gentle hint"
+                                : activeMode === "stuck"
+                                  ? "You are not alone"
+                                  : "Neura AI Tutor"}
                       </span>
                       <button onClick={() => setActiveMode("visual")} className="text-xs font-semibold text-[#159ac1]">
                         Hide extra details
@@ -946,68 +939,11 @@ export default function TopicLesson() {
                 </button>
               )}
             </article>
-
-            <aside className="space-y-5">
-              <div className="rounded-2xl bg-[#dff5fb] p-6">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#159ac1]">
-                  <Play className="h-5 w-5 fill-current" />
-                </div>
-                <h2 className="mt-5 text-xl font-bold text-[#1d596b]">Keep exploring</h2>
-                <p className="mt-2 text-sm leading-6 text-[#5e8a97]">
-                  Use the interactive visual simulation above, answer all 3 questions, and click Next Lesson to advance.
-                </p>
-              </div>
-
-              {furtherLessons.length > 0 && (
-                <div className="rounded-2xl border border-[#dff0f4] bg-white p-6 shadow-[0_10px_35px_rgba(27,91,109,0.04)]">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-[#315866] flex items-center gap-2">
-                      <BookOpen className="h-4 w-4 text-[#159ac1]" /> Further lessons
-                    </h3>
-                    <span className="text-[10px] font-bold text-[#159ac1] bg-[#e8f8fc] px-2 py-0.5 rounded-full">
-                      {subjectSummary}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-[#8aa7b1]">Topics in your active curriculum:</p>
-                  <div className="mt-4 space-y-2">
-                    {furtherLessons.map((item) => (
-                      <button
-                        key={item.title}
-                        onClick={() => setLocation(`/dashboard/lessons/${encodeURIComponent(item.title)}`)}
-                        className="w-full rounded-xl border border-[#e5f0f3] bg-[#fbfeff] p-3 text-left transition hover:border-[#159ac1] hover:bg-[#f0f9fb] group"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-[#173c4b] group-hover:text-[#159ac1]">{item.title}</span>
-                          <span className="text-[10px] font-semibold text-[#8aa7b1] bg-[#edf4f6] px-1.5 py-0.5 rounded-md">{item.subject}</span>
-                        </div>
-                        <p className="mt-1 text-[11px] text-[#7897a2] truncate">{item.eyebrow}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="rounded-2xl border border-[#dff0f4] bg-white p-6">
-                <div className="flex items-center gap-2 text-sm font-bold text-[#315866]">
-                  <RotateCcw className="h-4 w-4 text-[#159ac1]" /> Topic status
-                </div>
-                <p className="mt-4 text-3xl font-bold text-[#214554]">
-                  {calculatedProgress === 100 ? "Complete" : `${calculatedProgress}%`}
-                </p>
-                <p className="mt-1 text-xs text-[#9bb2ba]">
-                  Progress and study time are updated live on your dashboard.
-                </p>
-              </div>
-            </aside>
           </section>
         </main>
       </div>
     </DashboardLayout>
   );
-}
-
-function BookOpenIcon() {
-  return <span className="mr-1 inline-block text-[13px]">▣</span>;
 }
 
 export { lessons };

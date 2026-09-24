@@ -179,54 +179,260 @@ export function ChemicalEquationVisual() {
   );
 }
 
-// Lesson 8: Glucose Production & Energy Storage
+// Lesson 8: Glucose Production & Energy Storage (Iodine Starch Lab)
 export function GlucoseStarchVisual() {
+  const [tested, setTested] = useState(false);
+
   return (
     <div className="rounded-2xl border border-[#dff0f4] bg-[#f7fcfe] p-5 shadow-xs text-[#214554]">
-      <h4 className="text-sm font-bold text-[#1d596b]">Lesson 8 Visual: Starch Storage Iodine Lab</h4>
-      <p className="text-xs text-[#73949f]">Glucose monomers chain into starch polymers; iodine turns blue-black.</p>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e1f0f4] pb-3">
+        <div>
+          <h4 className="text-sm font-bold text-[#1d596b]">Lesson 8 Visual: Starch Storage &amp; Iodine Color Test</h4>
+          <p className="text-xs text-[#73949f]">Glucose monomers chain into starch polymers; amber iodine reacts into deep blue-black.</p>
+        </div>
+        <button
+          onClick={() => setTested(!tested)}
+          className={`px-3 py-1 rounded-lg text-xs font-bold text-white transition ${
+            tested ? "bg-slate-700 hover:bg-slate-800" : "bg-amber-600 hover:bg-amber-700"
+          }`}
+        >
+          {tested ? "Reset Leaf" : "Drop Iodine Solution"}
+        </button>
+      </div>
+
       <div className="mt-5 flex flex-col items-center rounded-xl bg-white p-6 border border-[#e3f1f4]">
-        <span className="text-xs font-bold text-[#159ac1]">Glucose Monomers → Starch Storage Polymers</span>
+        {/* Petri Dish with Leaf */}
+        <div className="relative h-44 w-64 bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-center">
+          {/* Petri Dish Circle */}
+          <div className="relative h-36 w-36 rounded-full border-2 border-slate-300 bg-white shadow-inner flex items-center justify-center overflow-hidden">
+            {/* Leaf inside petri dish */}
+            <path
+              d="M 68 20 Q 110 50 80 110 Q 70 120 70 125 Q 70 120 60 110 Q 30 50 68 20 Z"
+              fill={tested ? "#1e1b4b" : "#84cc16"}
+              className="transition-colors duration-700"
+            />
+            {/* Dropper */}
+            {!tested && (
+              <div className="absolute top-2 right-4 flex flex-col items-center animate-bounce">
+                <div className="h-6 w-2 bg-amber-400 rounded-t" />
+                <div className="h-2 w-1 bg-amber-600" />
+                <div className="h-1.5 w-1.5 rounded-full bg-amber-500 mt-1" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Glucose Monomer Chain */}
+        <div className="mt-4 flex items-center gap-1.5 overflow-x-auto p-2 bg-slate-50 rounded-lg border border-slate-200 w-full max-w-sm justify-center">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center">
+              <div className="h-6 w-8 bg-emerald-100 border border-emerald-400 rounded flex items-center justify-center text-[9px] font-bold text-emerald-800">
+                Glucose
+              </div>
+              {i < 4 && <span className="text-emerald-600 text-xs px-0.5">━</span>}
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-2 text-xs text-slate-500 text-center">
+          {tested
+            ? "✅ Positive reaction: Iodine turns deep midnight blue-black, proving presence of stored starch!"
+            : "Click 'Drop Iodine Solution' to test whether the leaf stored glucose as starch polymers."}
+        </p>
       </div>
     </div>
   );
 }
 
-// Lesson 9: Oxygen Release
+// Lesson 9: Oxygen Release (Elodea Submerged Bubble Counter)
 export function OxygenReleaseVisual() {
-  const [bubbles, setBubbles] = useState(15);
+  const [lightDistance, setLightDistance] = useState(20); // 10 to 60 cm
+  // Closer light = more bubbles
+  const bubblesPerMin = Math.round(50 - (lightDistance / 60) * 40);
+
   return (
     <div className="rounded-2xl border border-[#dff0f4] bg-[#f7fcfe] p-5 shadow-xs text-[#214554]">
-      <h4 className="text-sm font-bold text-[#1d596b]">Lesson 9 Visual: Elodea Underwater Oxygen Counter</h4>
-      <p className="text-xs text-[#73949f]">Submerged aquatic plants release visible oxygen gas bubbles in sunlight.</p>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e1f0f4] pb-3">
+        <div>
+          <h4 className="text-sm font-bold text-[#1d596b]">Lesson 9 Visual: Elodea Submerged Oxygen Bubbler</h4>
+          <p className="text-xs text-[#73949f]">Aquatic plants release visible oxygen gas bubbles proportional to light intensity.</p>
+        </div>
+        <span className="rounded-lg bg-sky-100 px-3 py-1 text-xs font-bold text-sky-800">
+          Rate: {bubblesPerMin} O₂ Bubbles / min
+        </span>
+      </div>
+
       <div className="mt-5 flex flex-col items-center rounded-xl bg-white p-6 border border-[#e3f1f4]">
-        <span className="text-base font-bold text-[#159ac1]">Rate: {bubbles} Oxygen Bubbles / minute</span>
+        <div className="relative h-44 w-72 bg-gradient-to-r from-amber-50/50 via-sky-50 to-sky-100 rounded-xl p-3 border border-slate-200 flex items-center justify-between">
+          {/* Light Lamp */}
+          <div className="flex flex-col items-center">
+            <Sun className="h-10 w-10 text-amber-500 animate-pulse" />
+            <span className="text-[10px] font-bold text-amber-800 mt-1">{lightDistance} cm</span>
+          </div>
+
+          {/* Test tube with submerged water weed */}
+          <div className="h-36 w-20 border-x-2 border-b-2 border-slate-400 rounded-b-2xl bg-cyan-100/60 relative overflow-hidden flex flex-col justify-end items-center">
+            {/* Water */}
+            <div className="w-full h-32 bg-sky-300/40 relative flex items-end justify-center">
+              {/* Plant sprig */}
+              <div className="w-2 h-20 bg-emerald-600 rounded-t relative">
+                <div className="absolute -left-2 top-2 h-1.5 w-3 bg-emerald-500 rounded-full" />
+                <div className="absolute -right-2 top-6 h-1.5 w-3 bg-emerald-500 rounded-full" />
+                <div className="absolute -left-2 top-10 h-1.5 w-3 bg-emerald-500 rounded-full" />
+              </div>
+
+              {/* Animated rising oxygen bubbles */}
+              <div className="absolute top-2 left-6 h-2 w-2 rounded-full bg-white/80 animate-ping" />
+              <div className="absolute top-8 right-6 h-1.5 w-1.5 rounded-full bg-white/80 animate-bounce" />
+              <div className="absolute top-16 left-8 h-2.5 w-2.5 rounded-full bg-white/90 animate-ping" style={{ animationDelay: "0.4s" }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Distance Slider */}
+        <div className="mt-4 w-full max-w-xs flex items-center gap-3">
+          <span className="text-xs font-bold text-slate-600">Close Light</span>
+          <input
+            type="range"
+            min="10"
+            max="60"
+            value={lightDistance}
+            onChange={(e) => setLightDistance(Number(e.target.value))}
+            className="flex-1 h-2 accent-[#159ac1]"
+          />
+          <span className="text-xs font-bold text-slate-600">Far Light</span>
+        </div>
+
+        <p className="mt-2 text-xs text-slate-500 text-center">
+          Moving the lamp closer increases photon energy, accelerating the rate of water photolysis and oxygen production!
+        </p>
       </div>
     </div>
   );
 }
 
-// Lesson 10: Factors Affecting Photosynthesis Rate
+// Lesson 10: Factors Affecting Photosynthesis Rate (Dynamic Curve Lab)
 export function LimitingFactorsVisual() {
+  const [light, setLight] = useState(60);
+  const [co2, setCo2] = useState(50);
+  const [temp, setTemp] = useState(25);
+
+  // Rate is limited by whichever factor is lowest (Liebig's Law of the Minimum)
+  const tempEfficiency = temp < 10 ? 20 : temp > 40 ? 15 : 100 - Math.abs(28 - temp) * 3;
+  const rate = Math.round(Math.min(light, co2, tempEfficiency));
+
   return (
     <div className="rounded-2xl border border-[#dff0f4] bg-[#f7fcfe] p-5 shadow-xs text-[#214554]">
-      <h4 className="text-sm font-bold text-[#1d596b]">Lesson 10 Visual: Limiting Factor Rate Grapher</h4>
-      <p className="text-xs text-[#73949f]">Light, CO₂, and temperature bottleneck maximum photosynthetic rate.</p>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e1f0f4] pb-3">
+        <div>
+          <h4 className="text-sm font-bold text-[#1d596b]">Lesson 10 Visual: Limiting Factor Rate Simulator</h4>
+          <p className="text-xs text-[#73949f]">Photosynthesis rate is bottlenecked by whichever factor is lowest.</p>
+        </div>
+        <span className="rounded-lg bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
+          Overall Rate: {rate}% Max
+        </span>
+      </div>
+
       <div className="mt-5 flex flex-col items-center rounded-xl bg-white p-6 border border-[#e3f1f4]">
-        <span className="text-xs font-bold text-[#159ac1]">Rate vs Light Intensity & Temperature Curve</span>
+        {/* Dynamic Rate Bar */}
+        <div className="w-full max-w-sm bg-slate-100 h-6 rounded-full overflow-hidden p-1 border border-slate-200 shadow-inner">
+          <div
+            className="h-full bg-gradient-to-r from-emerald-400 to-[#159ac1] rounded-full transition-all duration-300"
+            style={{ width: `${rate}%` }}
+          />
+        </div>
+
+        {/* 3 Slider Controls */}
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-md text-xs">
+          <div className="p-2 bg-amber-50 rounded-lg border border-amber-200 flex flex-col gap-1">
+            <span className="font-bold text-amber-800">Light: {light}%</span>
+            <input
+              type="range"
+              min="10"
+              max="100"
+              value={light}
+              onChange={(e) => setLight(Number(e.target.value))}
+              className="accent-amber-500 h-1.5"
+            />
+          </div>
+
+          <div className="p-2 bg-sky-50 rounded-lg border border-sky-200 flex flex-col gap-1">
+            <span className="font-bold text-sky-800">CO₂ Level: {co2}%</span>
+            <input
+              type="range"
+              min="10"
+              max="100"
+              value={co2}
+              onChange={(e) => setCo2(Number(e.target.value))}
+              className="accent-sky-500 h-1.5"
+            />
+          </div>
+
+          <div className="p-2 bg-rose-50 rounded-lg border border-rose-200 flex flex-col gap-1">
+            <span className="font-bold text-rose-800">Temp: {temp}°C</span>
+            <input
+              type="range"
+              min="5"
+              max="45"
+              value={temp}
+              onChange={(e) => setTemp(Number(e.target.value))}
+              className="accent-rose-500 h-1.5"
+            />
+          </div>
+        </div>
+
+        <p className="mt-2 text-xs text-slate-500 text-center">
+          Even if light is at 100%, if CO₂ or temperature is low, the overall rate remains strictly limited!
+        </p>
       </div>
     </div>
   );
 }
 
-// Lesson 11: Ecosystem Importance & Plant Life
+// Lesson 11: Ecosystem Importance & Plant Life (10% Energy Pyramid)
 export function EcosystemEnergyVisual() {
+  const [hoveredLevel, setHoveredLevel] = useState<number | null>(null);
+
+  const levels = [
+    { title: "Apex Carnivores (Eagle)", energy: "10 Joules", color: "#f87171", pct: "w-24" },
+    { title: "Secondary Consumers (Fox)", energy: "100 Joules", color: "#fb923c", pct: "w-36" },
+    { title: "Primary Consumers (Rabbit)", energy: "1,000 Joules", color: "#facc15", pct: "w-48" },
+    { title: "Primary Producers (Plants)", energy: "10,000 Joules", color: "#4ade80", pct: "w-60" },
+  ];
+
   return (
     <div className="rounded-2xl border border-[#dff0f4] bg-[#f7fcfe] p-5 shadow-xs text-[#214554]">
-      <h4 className="text-sm font-bold text-[#1d596b]">Lesson 11 Visual: Solar Energy Food Pyramid</h4>
-      <p className="text-xs text-[#73949f]">Plants act as primary producers converting sunlight for all animal life.</p>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e1f0f4] pb-3">
+        <div>
+          <h4 className="text-sm font-bold text-[#1d596b]">Lesson 11 Visual: Trophic 10% Energy Pyramid</h4>
+          <p className="text-xs text-[#73949f]">Plants capture solar energy, transferring approximately 10% to each higher trophic level.</p>
+        </div>
+        <span className="rounded-lg bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
+          90% Lost as Heat
+        </span>
+      </div>
+
       <div className="mt-5 flex flex-col items-center rounded-xl bg-white p-6 border border-[#e3f1f4]">
-        <span className="text-sm font-bold text-[#277f59]">Sun → Primary Producers (Plants) → Consumers</span>
+        {/* Trophic Pyramid Bars */}
+        <div className="flex flex-col items-center gap-1.5 w-full max-w-sm">
+          {levels.map((lvl, i) => (
+            <div
+              key={lvl.title}
+              onMouseEnter={() => setHoveredLevel(i)}
+              className={`${lvl.pct} h-9 rounded-lg flex items-center justify-between px-3 text-xs font-bold shadow-xs transition-all duration-300 cursor-pointer ${
+                hoveredLevel === i ? "scale-105 shadow-md" : ""
+              }`}
+              style={{ backgroundColor: lvl.color }}
+            >
+              <span className="truncate text-slate-900">{lvl.title}</span>
+              <span className="text-[11px] font-mono font-bold text-slate-800 ml-1">{lvl.energy}</span>
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-3 text-xs text-slate-600 text-center font-medium">
+          Every animal ecosystem relies on the massive 10,000 J foundational base produced exclusively by plants!
+        </p>
       </div>
     </div>
   );
