@@ -141,7 +141,7 @@ function DashboardLayoutContent({ children, setSidebarWidth }: { children: React
         <div className={`absolute right-0 top-0 h-full w-1 cursor-col-resize transition-colors hover:bg-[#159ac1]/20 ${isCollapsed ? "hidden" : ""}`} onMouseDown={() => setIsResizing(true)} />
       </div>
       <SidebarInset className="bg-[#f6fbfd]">
-        {isMobile && <div className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-[#e6f0f3] bg-white/95 px-3 backdrop-blur"><div className="flex items-center gap-2"><SidebarTrigger className="h-9 w-9 rounded-lg" /><span className="text-sm font-semibold text-[#234b5b]">{isTopicRoute ? `${currentTopic} Lessons` : isTutorRoute ? `${currentTutorTopic} • AI Tutor` : activeMenuItem.label}</span></div><DyslexiaFontToggle variant="compact" /></div>}
+        {isMobile && <div className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-[#e6f0f3] bg-white/95 px-3 backdrop-blur"><div className="flex items-center gap-2"><SidebarTrigger className="h-9 w-9 rounded-lg" /><span className="text-sm font-semibold text-[#234b5b]">{isTopicRoute ? `${currentTopic} Lessons` : isTutorRoute ? `${currentTutorTopic} • AI Tutor` : activeMenuItem.label}</span></div></div>}
         <main className="min-h-screen p-0">{children}</main>
       </SidebarInset>
     </>

@@ -1,5 +1,4 @@
 import DashboardLayout from "@/components/DashboardLayout";
-import { DyslexiaFontToggle } from "@/components/DyslexiaFontToggle";
 import { LessonVisualDispatcher } from "@/components/visuals/LessonVisualDispatcher";
 import {
   getTopicCompletedLessons,
@@ -616,7 +615,6 @@ export default function TopicLesson() {
             >
               <ArrowLeft className="h-4 w-4" /> Back to dashboard
             </button>
-            <DyslexiaFontToggle />
           </div>
 
           {!isPredefined && (

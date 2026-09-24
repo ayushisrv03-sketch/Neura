@@ -1,5 +1,4 @@
 import DashboardLayout from "@/components/DashboardLayout";
-import { DyslexiaFontToggle } from "@/components/DyslexiaFontToggle";
 import { trpc } from "@/lib/trpc";
 import {
   ArrowLeft,
@@ -209,10 +208,6 @@ export default function AITutorPage() {
                 <Bot className="h-3.5 w-3.5" />
                 <span>AI Tutor Session</span>
               </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <DyslexiaFontToggle />
             </div>
           </div>
         </header>

@@ -9,7 +9,6 @@ import {
   DEFAULT_FORMATS,
   DEFAULT_SUBJECTS,
 } from "@/hooks/useLearningPreferences";
-import { DyslexiaFontToggle } from "@/components/DyslexiaFontToggle";
 
 type Tab = "login" | "signup";
 
@@ -165,7 +164,6 @@ export default function AuthPage({ defaultTab }: { defaultTab: Tab }) {
           <span className="hidden sm:inline text-slate-500">Take all the time you need</span>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
-          <DyslexiaFontToggle />
           <Link className="px-3 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 transition text-xs font-medium" href="/">
             Back to Home
           </Link>

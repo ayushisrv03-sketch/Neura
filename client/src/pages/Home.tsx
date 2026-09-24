@@ -1,7 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { DashboardSearch } from "@/components/DashboardSearch";
-import { DyslexiaFontToggle } from "@/components/DyslexiaFontToggle";
 import { useLearningPreferences } from "@/hooks/useLearningPreferences";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -158,7 +157,6 @@ export default function Home() {
               />
             </div>
             <div className="ml-auto flex items-center gap-2.5 sm:gap-3 shrink-0">
-              <DyslexiaFontToggle />
               <button aria-label="Notifications" onClick={() => toast("You're all caught up", { description: "No new learning notifications." })} className="relative grid h-10 w-10 place-items-center rounded-xl border border-[#e4eff2] bg-white text-[#72909c] transition hover:border-[#bde3eb] hover:text-[#159ac1]"><Bell className="h-[18px] w-[18px]" /><span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#f59b75]" /></button>
               <div className="hidden h-8 w-px bg-[#e4eff2] sm:block" />
               <div className="flex items-center gap-2.5">
